@@ -1,3 +1,0 @@
-from FetcherAdminService.FetcherAdminManager import FetcherAdminManager
-
-fetcher_manager = FetcherAdminManager()

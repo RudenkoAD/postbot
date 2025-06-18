@@ -8,7 +8,7 @@ class KafkaProducerWrapper:
 
 
     def __init__(self):
-        self.__kafka_producer = KafkaProducer()
+        self.__kafka_producer = KafkaProducer(bootstrap_servers="kafka:9092")
         if(self.__kafka_producer.bootstrap_connected()):
             log.debug(f"Kafka producer bootstrap connection succeed")
         else: 
@@ -32,7 +32,7 @@ class KafkaProducerWrapper:
 
 
 def initTopicConsumer(topic, group_id = None):
-    kafka_consumer = KafkaConsumer(topic, group_id=group_id)
+    kafka_consumer = KafkaConsumer(topic, bootstrap_servers="kafka:9092", group_id=group_id)
     if(kafka_consumer.bootstrap_connected()):
         log.debug(f"Kafka consumer bootstrap connection succeed. Topic: {topic}")
         return kafka_consumer

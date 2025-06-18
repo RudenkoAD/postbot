@@ -52,14 +52,6 @@ async def controllerTask():
     await controller.addMultiple(target_groups_ids)
 
 
-
-def processCommand(self):
-    match self.__command.content.command_type:
-        case EFetcherAdminCommandType.ADD_GROUP_TO_OBSERVE.value:
-            self.addGroupToObserve()
-        case EFetcherAdminCommandType.ADD_API_TOKEN.value:
-            self.addAPIToken()
-
 def addGroupToObserve(self):
     self.__sendCommandToManager()
 

@@ -1,4 +1,3 @@
-from kafka.consumer import KafkaConsumer
 from Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
 from Commands.Command import Command
 from Commands.FetcherAdminCommand import FetcherAdminCommandContent
@@ -44,4 +43,5 @@ class FetcherAdminManager(metaclass=Singleton):
         return self.__command.content.social_media_type.name + "_manager_commands"
 
 
-    
+if __name__ == "__main__":
+    admin_manager = FetcherAdminManager()

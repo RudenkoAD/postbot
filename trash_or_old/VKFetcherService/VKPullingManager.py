@@ -1,10 +1,9 @@
 from vkbottle import VKAPIError
 from vkbottle.api import API
-from mySecrets import VK_ACCESS_TOKEN
 from config import log
 
 class VKPullingManager:
-    def __init__(self, vk_token: str = VK_ACCESS_TOKEN):
+    def __init__(self, vk_token: str):
         self.api = API(vk_token)
         self.last_post = dict()
 

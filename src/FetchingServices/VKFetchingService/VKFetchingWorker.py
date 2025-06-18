@@ -1,8 +1,6 @@
 from dataclasses import dataclass
-from kafka.consumer import KafkaConsumer
-from Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
-from config import log, ENCODER, pulling_tasks_queue
-import config
+from Utils.KafkaUtils import KafkaProducerWrapper
+from config import log, pulling_tasks_queue
 import asyncio
 
 class VKFetchingWorker:
@@ -54,7 +52,6 @@ class VKFetchingWorker:
         if posts is not None:
             for post in posts:
                 self.__kafka_producer.sendData(self.getSendingTopic(task), post)
-            log.benchmark("ended_pulling")
         return posts
     
     
@@ -63,7 +60,6 @@ class VKFetchingWorker:
         if posts is not None:
             for post in posts:
                 self.__kafka_producer.sendData(self.getSendingTopic(task), post)
-            log.benchmark("ended_pulling")
         return posts  
     
 

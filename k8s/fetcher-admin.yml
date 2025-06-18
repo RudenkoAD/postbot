@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fetcher-admin
+spec:
+  containers:
+  - name: fetcher-admin
+    image: fetcher-admin:latest
+    imagePullPolicy: Never

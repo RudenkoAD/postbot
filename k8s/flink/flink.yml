@@ -1,0 +1,174 @@
+# 1. Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flink-streaming
+
+---
+# 2. ConfigMap для конфигурации Flink
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-config
+  namespace: flink-streaming
+data:
+  flink-conf.yaml: |
+    jobmanager.rpc.address: jobmanager
+    taskmanager.numberOfTaskSlots: 2
+    parallelism.default: 2
+    state.backend: filesystem
+    state.checkpoints.dir: file:///opt/flink/conf/checkpoints
+    state.savepoints.dir: file:///opt/flink/conf/savepoints
+    high-availability.storageDir: file:///opt/flink/conf/ha
+  log4j.properties: |
+    logger.level=INFO
+
+---
+# 3. Service для JobManager
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobmanager
+  namespace: flink-streaming
+spec:
+  ports:
+  - name: rpc
+    port: 6123
+  - name: blob-server
+    port: 6124
+  - name: web-ui
+    port: 8081
+  selector:
+    app: jobmanager
+
+---
+# 4. Deployment для JobManager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobmanager
+  namespace: flink-streaming
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jobmanager
+  template:
+    metadata:
+      labels:
+        app: jobmanager
+    spec:
+      securityContext:
+        fsGroup: 9999 # Для прав на запись
+      containers:
+      - name: jobmanager
+        image: flink:1.16.0
+        args: ["jobmanager"]
+        ports:
+        - containerPort: 6123
+        - containerPort: 6124
+        - containerPort: 8081
+        resources:
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf
+        - name: flink-storage
+          mountPath: /opt/flink/conf/checkpoints
+          subPath: checkpoints
+        - name: flink-storage
+          mountPath: /opt/flink/conf/savepoints
+          subPath: savepoints
+        - name: tmp-storage
+          mountPath: /tmp
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+      - name: flink-storage
+        persistentVolumeClaim:
+          claimName: flink-pvc
+      - name: tmp-storage
+        emptyDir: {}
+
+---
+# 5. Deployment для TaskManager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskmanager
+  namespace: flink-streaming
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taskmanager
+  template:
+    metadata:
+      labels:
+        app: taskmanager
+    spec:
+      containers:
+      - name: taskmanager
+        image: flink:1.16.0
+        args: ["taskmanager", "--jobmanager", "jobmanager:6123"]
+        ports:
+        - containerPort: 6122
+        - containerPort: 6125
+        resources:
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        volumeMounts:
+        - name: flink-storage
+          mountPath: /opt/flink/conf
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+      - name: flink-storage
+        emptyDir: {}
+
+---
+# 6. External Service для веб-UI
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-ui
+  namespace: flink-streaming
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8081
+    targetPort: 8081
+  selector:
+    app: jobmanager
+
+---
+# 7. PersistentVolume и PVC
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flink-pv
+spec:
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data/flink"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim 
+metadata:
+  name: flink-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi

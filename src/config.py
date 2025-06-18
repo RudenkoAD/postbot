@@ -1,9 +1,10 @@
 from Commands.CommandCreator import CommandCreator
 from Utils.Encoder import Encoder
-from Utils.Logger import Logger
+from logging import getLogger, DEBUG, basicConfig
 from queue import Queue
 
-log = Logger()
+log = getLogger("logger")
+basicConfig(level=DEBUG)
 
 CMD_CREATOR = CommandCreator()
 ENCODER = Encoder()

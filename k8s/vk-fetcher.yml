@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vk-fetcher
+spec:
+  containers:
+  - name: vk-fetcher
+    image: vk-fetcher:latest
+    imagePullPolicy: Never

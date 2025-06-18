@@ -1,5 +1,4 @@
 from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.consumer import KafkaConsumer
 from Utils.KafkaUtils import initTopicConsumer
 from Commands.Command import Command
 from Commands.KafkaAdminCommand import KafkaAdminCommandContent, EKafkaAdminCommandType 
@@ -12,7 +11,7 @@ class KafkaAdminManager(metaclass=Singleton):
 
 
     def __init__(self):
-        self.kafka_admin_client = KafkaAdminClient(bootstrap_servers="localhost:9092", client_id='admin')
+        self.kafka_admin_client = KafkaAdminClient(bootstrap_servers="kafka:9092", client_id='admin')
         self.__initCommandTopic()
         self.__startReadingCommands()
 
@@ -69,3 +68,7 @@ class KafkaAdminManager(metaclass=Singleton):
         if name in self.kafka_admin_client.list_topics():
             return True
         return False
+
+
+if __name__ == "__main__":
+    admin_manager = KafkaAdminManager()

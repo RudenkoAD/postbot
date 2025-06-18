@@ -5,12 +5,10 @@ from Commands.Command import Command
 from Commands.FetcherAdminCommand import FetcherAdminCommandContent, EFetcherAdminCommandType
 from Utils.Singleton import Singleton
 from config import log, ENCODER, pulling_tasks_queue
-import time
 import config
 import asyncio
-import threading
 
-class VKFetchersManager(metaclass=Singleton):
+class VKFetchingManager(metaclass=Singleton):
     __fetchers: dict[str, VKFetcher] = dict()
     __command: Command[FetcherAdminCommandContent]
     __kafka_producer: KafkaProducerWrapper
@@ -47,7 +45,6 @@ class VKFetchersManager(metaclass=Singleton):
 
 
     def __createAndSendPullingTasks(self):
-        log.benchmark("start_pulling")
         log.debug(f"Create new tasks for pulling. Send them in topic {config.VK_PULLING_TASKS_TOPIC_NAME}")
         for group_id in self.__groups:
             pulling_tasks_queue.put(group_id)
@@ -101,8 +98,19 @@ class VKFetchersManager(metaclass=Singleton):
 
     def __addAPIToken(self):
         log.debug(f"Added new API Token. Create corresponding fetcher")
-        
+
 
     def __removeAPIToken(self):
         if self.__fetchers.get(self.__command.api_token) is not None:
             self.__fetchers.pop(self.__command.api_token)
+
+
+def main():
+    vk_fetchers_manager = VKFetchingManager(config.target_groups_ids)
+    loop = asyncio.new_event_loop()
+    vk_fetchers_start_task = loop.create_task(vk_fetchers_manager.start())
+    loop.run_forever()
+    print("end")
+
+if __name__ == "__main__":
+    main()
