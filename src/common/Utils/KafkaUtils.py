@@ -1,7 +1,11 @@
+import logging
+import os
 from kafka.producer import KafkaProducer
 from kafka.consumer import KafkaConsumer
-from config import log, ENCODER, CMD_CREATOR
-import config
+from common.Commands.CommandCreator import CommandCreator
+from common.Utils.Encoder import Encoder
+
+log = logging.getLogger(__name__)
 
 class KafkaProducerWrapper:
     __kafka_producer: KafkaProducer
@@ -16,19 +20,19 @@ class KafkaProducerWrapper:
 
 
     def sendCommand(self, topic, command):
-        self.__kafka_producer.send(topic=topic, value=ENCODER.encodeCommandToJSON(command))
+        self.__kafka_producer.send(topic=topic, value=Encoder.encodeCommandToJSON(command))
 
 
     def sendData(self, topic, data):
-        self.__kafka_producer.send(topic=topic, value=ENCODER.encodeData(data))
+        self.__kafka_producer.send(topic=topic, value=Encoder.encodeData(data))
 
     
     def initTopic(self, topic):
-        command = CMD_CREATOR.createKafkaCreateTopicCommand(
+        command = CommandCreator.createKafkaCreateTopicCommand(
             topics_names=list([topic]), 
             topics_parameters=dict({topic: [1, 1]})
             )
-        self.sendCommand(config.KAFKA_ADMIN_COMMANDS_TOPIC_NAME, command)
+        self.sendCommand(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"), command)
 
 
 def initTopicConsumer(topic, group_id = None):

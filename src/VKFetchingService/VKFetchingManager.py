@@ -1,13 +1,14 @@
+import os
 from kafka.consumer import KafkaConsumer
-from Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
-from FetchingServices.VKFetchingService.VKFetcher import VKFetcher
-from Commands.Command import Command
-from Commands.FetcherAdminCommand import FetcherAdminCommandContent, EFetcherAdminCommandType
-from Utils.Singleton import Singleton
-from config import log, ENCODER, pulling_tasks_queue
-import config
+from common.Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
+from VKFetcher import VKFetcher
+from common.Commands.Command import Command
+from common.Commands.FetcherAdminCommand import FetcherAdminCommandContent, EFetcherAdminCommandType
+from common.Utils.Singleton import Singleton
 import asyncio
-
+from common.Utils.Encoder import Encoder
+import logging
+log = logging.getLogger(__name__)
 class VKFetchingManager(metaclass=Singleton):
     __fetchers: dict[str, VKFetcher] = dict()
     __command: Command[FetcherAdminCommandContent]
@@ -15,7 +16,8 @@ class VKFetchingManager(metaclass=Singleton):
     __vk_fetchers_command_consumer: KafkaConsumer
 
 
-    def __init__(self, initGroups: set = set()):
+    def __init__(self, pulling_tasks_queue, initGroups: set = set()):
+        self.pulling_tasks_queue = pulling_tasks_queue
         self.__groups: set = initGroups
         self.__initKafkaComponents()
 
@@ -23,7 +25,7 @@ class VKFetchingManager(metaclass=Singleton):
     def __initKafkaComponents(self):
         self.__kafka_producer = KafkaProducerWrapper()
         self.__initTopics()
-        self.__vk_fetchers_command_consumer = initTopicConsumer(config.VK_FETCHERS_COMMANDS_TOPIC_NAME)
+        self.__vk_fetchers_command_consumer = initTopicConsumer(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME"))
 
 
     def __initTopics(self):
@@ -45,13 +47,13 @@ class VKFetchingManager(metaclass=Singleton):
 
 
     def __createAndSendPullingTasks(self):
-        log.debug(f"Create new tasks for pulling. Send them in topic {config.VK_PULLING_TASKS_TOPIC_NAME}")
+        log.debug(f"Create new tasks for pulling. Send them in topic {os.getenv('VK_PULLING_TASKS_TOPIC_NAME')}")
         for group_id in self.__groups:
-            pulling_tasks_queue.put(group_id)
+            self.pulling_tasks_queue.put(group_id)
 
     def __startReadingCommands(self):
         for msg in self.__vk_fetchers_command_consumer:
-            self.__command = ENCODER.decodeCommandFromJSON(msg)
+            self.__command = Encoder.decodeCommandFromJSON(msg)
             self.__processCommand()
 
 
@@ -103,14 +105,3 @@ class VKFetchingManager(metaclass=Singleton):
     def __removeAPIToken(self):
         if self.__fetchers.get(self.__command.api_token) is not None:
             self.__fetchers.pop(self.__command.api_token)
-
-
-def main():
-    vk_fetchers_manager = VKFetchingManager(config.target_groups_ids)
-    loop = asyncio.new_event_loop()
-    vk_fetchers_start_task = loop.create_task(vk_fetchers_manager.start())
-    loop.run_forever()
-    print("end")
-
-if __name__ == "__main__":
-    main()

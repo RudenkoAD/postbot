@@ -1,10 +1,12 @@
+import os
 from kafka.admin import KafkaAdminClient, NewTopic
-from Utils.KafkaUtils import initTopicConsumer
-from Commands.Command import Command
-from Commands.KafkaAdminCommand import KafkaAdminCommandContent, EKafkaAdminCommandType 
-from Utils.Singleton import Singleton
-from config import log, ENCODER
-import config
+from common.Utils.KafkaUtils import initTopicConsumer
+from common.Commands.Command import Command
+from common.Commands.KafkaAdminCommand import KafkaAdminCommandContent, EKafkaAdminCommandType 
+from common.Utils.Singleton import Singleton
+from common.Utils.Encoder import Encoder
+import logging
+log = logging.getLogger(__name__)
 
 class KafkaAdminManager(metaclass=Singleton):
     __command: Command[KafkaAdminCommandContent]
@@ -17,15 +19,15 @@ class KafkaAdminManager(metaclass=Singleton):
 
 
     def __initCommandTopic(self):
-        if not self.__checkIfTopicExists(config.KAFKA_ADMIN_COMMANDS_TOPIC_NAME):
-            self.__createTopics({NewTopic(name=config.KAFKA_ADMIN_COMMANDS_TOPIC_NAME, num_partitions=1, replication_factor=1)})
-        self.__command_consumer = initTopicConsumer(config.KAFKA_ADMIN_COMMANDS_TOPIC_NAME)
+        if not self.__checkIfTopicExists(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME")):
+            self.__createTopics({NewTopic(name=os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME"), num_partitions=1, replication_factor=1)})
+        self.__command_consumer = initTopicConsumer(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME"))
 
 
     def __startReadingCommands(self):
         for msg in self.__command_consumer:
             log.debug(f"Got command {msg.value}.\n Starting decoding")
-            self.__command = ENCODER.decodeCommandFromJSON(msg)
+            self.__command = Encoder().decodeCommandFromJSON(msg)
             if(self.__command != None):
                 self.__processCommand()
             else:

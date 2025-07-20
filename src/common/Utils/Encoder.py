@@ -1,21 +1,21 @@
-from Utils.Singleton import Singleton
-from Commands.Command import Command, ECommandTargetTypes
-from Commands.KafkaAdminCommand import KafkaAdminCommandContent
-from Commands.FetcherAdminCommand import FetcherAdminCommandContent
+import logging
+from common.Commands.Command import Command, ECommandTargetTypes
+from common.Commands.KafkaAdminCommand import KafkaAdminCommandContent
+from common.Commands.FetcherAdminCommand import FetcherAdminCommandContent
 from dataclasses import asdict
-from Utils.Logger import Logger
 import dacite
 import json
 
-log = Logger()
+log = logging.getLogger(__name__)
 
-class Encoder(metaclass=Singleton):
-    def encodeCommandToJSON(self, command: Command):
-        return self.encodeData(asdict(command))
+class Encoder:
+    @staticmethod
+    def encodeCommandToJSON(command: Command):
+        return Encoder.encodeData(asdict(command))
 
-
-    def decodeCommandFromJSON(self, raw_command: str):
-        structured_command = self.decodeData(raw_command)
+    @staticmethod
+    def decodeCommandFromJSON(raw_command: str):
+        structured_command = Encoder.decodeData(raw_command)
         match structured_command["target_type"]:
             case ECommandTargetTypes.KAFKA_ADMIN.value:
                 command = dacite.from_dict(data_class=Command[KafkaAdminCommandContent], data=structured_command)
@@ -25,9 +25,9 @@ class Encoder(metaclass=Singleton):
                 command = None
         return command
     
-
-    def encodeData(self, data):
+    @staticmethod
+    def encodeData(data):
         return json.dumps(data, ensure_ascii=False).encode(encoding="utf-8")
-    
-    def decodeData(self, data):
+    @staticmethod
+    def decodeData(data):
         return json.loads(data.value.decode("utf-8"))

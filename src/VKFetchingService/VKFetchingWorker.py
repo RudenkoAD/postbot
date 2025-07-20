@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from Utils.KafkaUtils import KafkaProducerWrapper
-from config import log, pulling_tasks_queue
+from common.Utils.KafkaUtils import KafkaProducerWrapper
 import asyncio
-
+import logging
+log = logging.getLogger(__name__)
 class VKFetchingWorker:
     @dataclass
     class PullingTask:
@@ -19,8 +19,9 @@ class VKFetchingWorker:
     __kafka_producer: KafkaProducerWrapper
 
 
-    def __init__(self, sleep_time, vk_fetcher, default_sending_topic):
+    def __init__(self, pulling_tasks_queue, sleep_time, vk_fetcher, default_sending_topic):
         log.debug(f"Started initialization of new worker with parameters: sleep_time: {sleep_time}, default_sending_topic: {default_sending_topic}")
+        self.pulling_tasks_queue = pulling_tasks_queue
         self.__sleep_time = sleep_time
         self.__vk_fetcher = vk_fetcher
         self.__default_sending_topic = default_sending_topic
@@ -44,7 +45,7 @@ class VKFetchingWorker:
 
   
     def __getNextTask(self):
-        return self.PullingTask(pulling_tasks_queue.get())
+        return self.PullingTask(self.pulling_tasks_queue.get())
 
 
     async def __pullGroupAndSend(self, task):

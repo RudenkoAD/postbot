@@ -1,12 +1,10 @@
+import os
 from vkbottle import VKAPIError
 from vkbottle.api import API
-from FetchingServices.Fetcher import Fetcher
-from FetchingServices.VKFetchingService.VKFetchingWorker import VKFetchingWorker
-from config import log
-import config
-import asyncio
-
-class VKFetcher(Fetcher):
+from VKFetchingWorker import VKFetchingWorker
+import logging
+log = logging.getLogger(__name__)
+class VKFetcher:
     class RequestParameters:
         parameters: dict
 
@@ -45,9 +43,10 @@ class VKFetcher(Fetcher):
 
     def __init_worker(self):
         self.__worker = VKFetchingWorker(
+                                pulling_tasks_queue=self.pulling_tasks_queue,
                                 sleep_time=1, 
                                 vk_fetcher=self, 
-                                default_sending_topic=config.VK_PULLED_POSTS_TOPIC_NAME)
+                                default_sending_topic=os.getenv("VK_PULLED_POSTS_TOPIC_NAME"))
 
 
     async def updateOnGroupPosts(self, task: VKFetchingWorker.PullingTask):

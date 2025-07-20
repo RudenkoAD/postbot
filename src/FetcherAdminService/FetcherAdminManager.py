@@ -1,10 +1,10 @@
-from Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
-from Commands.Command import Command
-from Commands.FetcherAdminCommand import FetcherAdminCommandContent
-from Utils.Singleton import Singleton
-from config import log, ENCODER
-import config
+import os
+from common.Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
+from common.Commands.Command import Command
+from common.Commands.FetcherAdminCommand import FetcherAdminCommandContent
+from common.Utils.Singleton import Singleton
 import time
+from common.Utils.Encoder import Encoder
 
 
 class FetcherAdminManager(metaclass=Singleton):
@@ -19,18 +19,18 @@ class FetcherAdminManager(metaclass=Singleton):
 
     def __initKafkaComponents(self):
         self.__initTopics()
-        self.__command_consumer = initTopicConsumer(config.FETCHER_ADMIN_COMMANDS_TOPIC_NAME)
+        self.__command_consumer = initTopicConsumer(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"))
 
 
     def __initTopics(self):
-        self.__kafka_producer.initTopic(config.FETCHER_ADMIN_COMMANDS_TOPIC_NAME)
-        self.__kafka_producer.initTopic(config.VK_FETCHERS_COMMANDS_TOPIC_NAME)
+        self.__kafka_producer.initTopic(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"))
+        self.__kafka_producer.initTopic(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME"))
         time.sleep(1)
 
 
     def __startReadingCommands(self):
         for msg in self.__command_consumer:
-            self.__command = ENCODER.decodeCommandFromJSON(msg)
+            self.__command = Encoder.decodeCommandFromJSON(msg)
             self.__sendCommandToCorrespondingManager()
 
 
