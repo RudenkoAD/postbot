@@ -25,7 +25,7 @@ class VKFetchingManager(metaclass=Singleton):
     def __initKafkaComponents(self):
         self.__kafka_producer = KafkaProducerWrapper()
         self.__initTopics()
-        self.__vk_fetchers_command_consumer = initTopicConsumer(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME"))
+        self.__vk_fetchers_command_consumer = initTopicConsumer(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME", "vk_fetcher_commands"))
 
 
     def __initTopics(self):
@@ -47,7 +47,7 @@ class VKFetchingManager(metaclass=Singleton):
 
 
     def __createAndSendPullingTasks(self):
-        log.debug(f"Create new tasks for pulling. Send them in topic {os.getenv('VK_PULLING_TASKS_TOPIC_NAME')}")
+        log.debug(f"Create new tasks for pulling. Send them in topic {os.getenv('VK_PULLING_TASKS_TOPIC_NAME', "vk_posts")}")
         for group_id in self.__groups:
             self.pulling_tasks_queue.put(group_id)
 

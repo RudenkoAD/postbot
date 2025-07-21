@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bot-reader
+spec:
+  containers:
+  - name: bot-reader
+    image: bot-reader:latest
+    imagePullPolicy: Never
+    env:
+    - name: TELEGRAM_BOT_TOKEN
+      value: {{ .Values.telegramBotToken}}
+    - name: BOT_READER_KAFKA_TOPIC
+      value: {{ .Values.botReaderKafkaTopic}}
+    - name: KAFKA_BOOTSTRAP_SERVERS
+      value: {{.Release.Name}}-kafka

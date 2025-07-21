@@ -7,12 +7,13 @@ from common.Utils.Encoder import Encoder
 
 log = logging.getLogger(__name__)
 
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 class KafkaProducerWrapper:
     __kafka_producer: KafkaProducer
 
 
     def __init__(self):
-        self.__kafka_producer = KafkaProducer(bootstrap_servers="kafka:9092")
+        self.__kafka_producer = KafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
         if(self.__kafka_producer.bootstrap_connected()):
             log.debug(f"Kafka producer bootstrap connection succeed")
         else: 
@@ -32,11 +33,11 @@ class KafkaProducerWrapper:
             topics_names=list([topic]), 
             topics_parameters=dict({topic: [1, 1]})
             )
-        self.sendCommand(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"), command)
+        self.sendCommand(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME", "fetcher_admin_commands"), command)
 
 
 def initTopicConsumer(topic, group_id = None):
-    kafka_consumer = KafkaConsumer(topic, bootstrap_servers="kafka:9092", group_id=group_id)
+    kafka_consumer = KafkaConsumer(topic, bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS, group_id=group_id)
     if(kafka_consumer.bootstrap_connected()):
         log.debug(f"Kafka consumer bootstrap connection succeed. Topic: {topic}")
         return kafka_consumer

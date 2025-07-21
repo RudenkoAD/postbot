@@ -30,26 +30,42 @@
 #     annotations:
 #       kubernetes.io/ingress.class: nginx
 
-# kafka:
-#   enabled: true
-#   replicaCount: 3
-#   persistence:
-#     enabled: true
-#     size: 8Gi
-#   service:
-#     type: ClusterIP
-#     ports:
-#       client: 9092
-#       controller: 9093
-#   listeners:
-#     client:
-#       protocol: PLAINTEXT
-#       port: 9092
-#     controller:
-#       protocol: PLAINTEXT
-#       port: 9093
-#   controller:
-#     quorumVoters: "1@kafka-0.kafka-headless:9093,2@kafka-1.kafka-headless:9093,3@kafka-2.kafka-headless:9093"
-#   numPartitions: 3
-#   defaultReplicationFactor: 3
-#   autoCreateTopicsEnable: true
+kafka:
+  enabled: true
+  replicaCount: 1
+  kraft:
+    enabled: true
+    controllerQuorumVoters: "1@kafka-0.kafka-headless.default.svc.cluster.local:9093"
+    clusterId: "Mk3OEYBSD34fcwNTJENDM2Qk"
+  listeners:
+    client:
+      protocol: PLAINTEXT
+      port: 9092
+    controller:
+      protocol: PLAINTEXT
+      port: 9093
+  service:
+    name: kafka
+    type: ClusterIP
+    ports:
+      client: 9092
+      controller: 9093
+  persistence:
+    enabled: true
+    size: 8Gi
+  autoCreateTopicsEnable: false
+  logDirs:
+    - /bitnami/kafka/data
+  extraEnvVars:
+    - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+      value: "0"
+    - name: KAFKA_LOG_RETENTION_HOURS
+      value: "168"
+
+fetcherAdminCommandsTopicName: "fetcher_admin_commands"
+kafkaAdminCommandsTopicName: "kafka_admin_commands"
+vkFetchersCommandsTopicName: "vk_fetcher_commands"
+vkPulledPostsTopicName: "vk_posts"
+botReaderKafkaTopic: "bot_reader"
+telegramBotToken: "6244825355:AAEWNuVCRWHlk4QxSLB9-eeIyytoXnOSfhI"
+botWriterKafkaTopic: "bot-writer"

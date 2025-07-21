@@ -46,7 +46,7 @@ class VKFetcher:
                                 pulling_tasks_queue=self.pulling_tasks_queue,
                                 sleep_time=1, 
                                 vk_fetcher=self, 
-                                default_sending_topic=os.getenv("VK_PULLED_POSTS_TOPIC_NAME"))
+                                default_sending_topic=os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts"))
 
 
     async def updateOnGroupPosts(self, task: VKFetchingWorker.PullingTask):

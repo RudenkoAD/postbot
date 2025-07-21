@@ -8,20 +8,21 @@ from common.Utils.Encoder import Encoder
 import logging
 log = logging.getLogger(__name__)
 
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 class KafkaAdminManager(metaclass=Singleton):
     __command: Command[KafkaAdminCommandContent]
 
 
     def __init__(self):
-        self.kafka_admin_client = KafkaAdminClient(bootstrap_servers="kafka:9092", client_id='admin')
+        self.kafka_admin_client = KafkaAdminClient(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS, client_id='admin')
         self.__initCommandTopic()
         self.__startReadingCommands()
 
 
     def __initCommandTopic(self):
-        if not self.__checkIfTopicExists(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME")):
-            self.__createTopics({NewTopic(name=os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME"), num_partitions=1, replication_factor=1)})
-        self.__command_consumer = initTopicConsumer(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME"))
+        if not self.__checkIfTopicExists(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME", "kafka_admin_commands")):
+            self.__createTopics({NewTopic(name=os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME", "kafka_admin_commands"), num_partitions=1, replication_factor=1)})
+        self.__command_consumer = initTopicConsumer(os.getenv("KAFKA_ADMIN_COMMANDS_TOPIC_NAME", "kafka_admin_commands"))
 
 
     def __startReadingCommands(self):

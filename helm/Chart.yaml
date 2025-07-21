@@ -22,12 +22,8 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
-# dependencies:
-#   - name: mongodb
-#     version: "15.6.8"
-#     repository: "https://charts.bitnami.com/bitnami"
-#     condition: mongodb.enabled
-#   - name: kafka
-#     version: "32.2.9"
-#     repository: "https://charts.bitnami.com/bitnami"
-#     condition: kafka.enabled
+dependencies:
+  - name: kafka
+    version: "32.2.9"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled

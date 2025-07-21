@@ -19,12 +19,12 @@ class FetcherAdminManager(metaclass=Singleton):
 
     def __initKafkaComponents(self):
         self.__initTopics()
-        self.__command_consumer = initTopicConsumer(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"))
+        self.__command_consumer = initTopicConsumer(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME", "fetcher_admin_commands"))
 
 
     def __initTopics(self):
-        self.__kafka_producer.initTopic(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME"))
-        self.__kafka_producer.initTopic(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME"))
+        self.__kafka_producer.initTopic(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME", "fetcher_admin_commands"))
+        self.__kafka_producer.initTopic(os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME", "vk_fetcher_commands"))
         time.sleep(1)
 
 
