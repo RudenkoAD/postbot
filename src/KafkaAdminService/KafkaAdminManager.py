@@ -2,7 +2,7 @@ import os
 from kafka.admin import KafkaAdminClient, NewTopic
 from common.Utils.KafkaUtils import initTopicConsumer
 from common.Commands.Command import Command
-from common.Commands.KafkaAdminCommand import KafkaAdminCommandContent, EKafkaAdminCommandType 
+from common.Commands.KafkaAdminCommand import CreateTopicCommand
 from common.Utils.Singleton import Singleton
 from common.Utils.Encoder import Encoder
 import logging
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 class KafkaAdminManager(metaclass=Singleton):
-    __command: Command[KafkaAdminCommandContent]
+    __command: object
 
 
     def __init__(self):
@@ -36,13 +36,13 @@ class KafkaAdminManager(metaclass=Singleton):
 
 
     def __processCommand(self):
-        match self.__command.content.command_type:
-            case EKafkaAdminCommandType.CREATE_TOPIC.value:
-                log.debug(f"Decoded CREATE_TOPICS command. Starting processing")
-                topics = self.__prepareTopics()
-                self.__createTopics(topics)
-            case _:
-                log.debug(f"Decoded UNKNOWN command. Dropping command")
+        content = self.__command.content
+        if isinstance(content, CreateTopicCommand):
+            log.debug(f"Decoded CreateTopicCommand. Starting processing")
+            topics = self.__prepareTopics()
+            self.__createTopics(topics)
+        else:
+            log.debug(f"Decoded UNKNOWN command. Dropping command")
 
     def __prepareTopics(self):
         log.debug(f"Requested creation of {len(self.__command.content.topics_names)} topics")

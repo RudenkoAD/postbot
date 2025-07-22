@@ -29,10 +29,11 @@ class KafkaProducerWrapper:
 
     
     def initTopic(self, topic):
-        command = CommandCreator.createKafkaCreateTopicCommand(
-            topics_names=list([topic]), 
-            topics_parameters=dict({topic: [1, 1]})
-            )
+        command = CommandCreator.getCreateTopicCommand(
+            topics_names=[topic],
+            num_partitions=1,
+            replication_factor=1
+        )
         self.sendCommand(os.getenv("FETCHER_ADMIN_COMMANDS_TOPIC_NAME", "fetcher_admin_commands"), command)
 
 

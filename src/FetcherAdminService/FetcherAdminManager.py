@@ -1,14 +1,16 @@
 import os
 from common.Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
 from common.Commands.Command import Command
-from common.Commands.FetcherAdminCommand import FetcherAdminCommandContent
+from common.Commands.FetcherAdminCommand import (
+    AddGroupsCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand
+)
 from common.Utils.Singleton import Singleton
 import time
 from common.Utils.Encoder import Encoder
 
 
 class FetcherAdminManager(metaclass=Singleton):
-    __command: Command[FetcherAdminCommandContent]
+    __command: object
 
 
     def __init__(self):

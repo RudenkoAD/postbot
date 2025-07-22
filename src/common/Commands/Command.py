@@ -1,22 +1,22 @@
 from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from enum import Enum
 from typing import TypeVar, Generic
 
-class ECommandTargetTypes(Enum):
+
+class CommandTarget(Enum):
     KAFKA_ADMIN = 0
     FETCHER_ADMIN = 1
 
-T = TypeVar('T')
 
-@dataclass
-class Command(Generic[T]):
-    target_type: int
-    content: T
+@dataclass_json
+@dataclass(kw_only=True)
+class Command:
+    """
+    Base class for commands sent to the Kafka Admin Service or Fetcher Admin Service.
+    Attributes:
+        target_type (CommandTarget): The type of the command target, either Kafka Admin or Fetcher Admin.
+    """
 
-    def __init__(self, target_type, content):
-        self.target_type = target_type
-        self.content = content
-
-    def __init__(self, target_type, content):
-        self.target_type = target_type
-        self.content = content
+    target_type: CommandTarget
+    id: int = 0

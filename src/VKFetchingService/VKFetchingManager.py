@@ -3,7 +3,9 @@ from kafka.consumer import KafkaConsumer
 from common.Utils.KafkaUtils import KafkaProducerWrapper, initTopicConsumer
 from VKFetcher import VKFetcher
 from common.Commands.Command import Command
-from common.Commands.FetcherAdminCommand import FetcherAdminCommandContent, EFetcherAdminCommandType
+from common.Commands.FetcherAdminCommand import (
+    AddGroupsCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand
+)
 from common.Utils.Singleton import Singleton
 import asyncio
 from common.Utils.Encoder import Encoder
@@ -11,7 +13,7 @@ import logging
 log = logging.getLogger(__name__)
 class VKFetchingManager(metaclass=Singleton):
     __fetchers: dict[str, VKFetcher] = dict()
-    __command: Command[FetcherAdminCommandContent]
+    __command: object
     __kafka_producer: KafkaProducerWrapper
     __vk_fetchers_command_consumer: KafkaConsumer
 
@@ -58,30 +60,49 @@ class VKFetchingManager(metaclass=Singleton):
 
 
     async def __processCommand(self):
-        match self.__command.content.command_type:
-            case EFetcherAdminCommandType.ADD_GROUPS.value:
-                log.debug(f"Decoded ADD_GROUPS command. Starting processing")
-                self.__addGroups()
-            case EFetcherAdminCommandType.REMOVE_GROUPS.value:
-                log.debug(f"Decoded REMOVE_GROUPS command. Starting processing")
-                self.__removeGroups()
-            case EFetcherAdminCommandType.CLEAR_GROUPS.value:
-                log.debug(f"Decoded CLEAR_GROUPS command. Starting processing")
-                self.__clearGroups()
-            case EFetcherAdminCommandType.ADD_API_TOKEN.value:
-                log.debug(f"Decoded ADD_API_TOKEN command. Starting processing")
-                self.__addAPIToken()
-            case EFetcherAdminCommandType.REMOVE_API_TOKEN.value:
-                log.debug(f"Decoded REMOVE_API_TOKEN command. Starting processing")
-                self.__removeAPIToken()
-            case _:
-                log.debug(f"Decoded UNKNOWN command. Dropping command")
+        content = self.__command.content
+        if isinstance(content, AddGroupsCommand):
+            log.debug(f"Decoded AddGroupsCommand. Starting processing")
+            self.__addGroups()
+        elif isinstance(content, RemoveGroupsCommand):
+            log.debug(f"Decoded RemoveGroupsCommand. Starting processing")
+            self.__removeGroups()
+        elif isinstance(content, ClearGroupsCommand):
+            log.debug(f"Decoded ClearGroupsCommand. Starting processing")
+            self.__clearGroups()
+        elif isinstance(content, AddApiTokenCommand):
+            log.debug(f"Decoded AddApiTokenCommand. Starting processing")
+            self.__addAPIToken()
+        elif isinstance(content, RemoveApiTokenCommand):
+            log.debug(f"Decoded RemoveApiTokenCommand. Starting processing")
+            self.__removeAPIToken()
+        else:
+            log.debug(f"Decoded UNKNOWN command. Dropping command")
 
 
     def __addGroups(self):
         for group in self.__command.content.groups:
-            if not self.__checkIfGroupObserved(group):
+            if not self.__checkIfGroupObserved(group) and self.__isValidVkGroup(group):
                 self.__groups.add(group)
+            else:
+                log.debug(f"Skipped invalid or duplicate VK group: {group}")
+                self.__kafka_producer.sendData(
+                    topic=os.getenv("VK_FETCHERS_COMMANDS_TOPIC_NAME", "vk_fetcher_commands"),
+                    data=f"Skipped invalid or duplicate VK group: {group}"
+                )
+                
+
+    def __isValidVkGroup(self, group: str) -> bool:
+        # Accepts links like vk.com/club123, vk.com/public123, vk.com/somegroup, or just group id/names
+        import re
+        vk_group_patterns = [
+            r"^(https?://)?vk\.com/(club|public)?[a-zA-Z0-9_]+/?$",
+            r"^[a-zA-Z0-9_]+$"
+        ]
+        for pattern in vk_group_patterns:
+            if re.match(pattern, group):
+                return True
+        return False
 
 
     def __removeGroups(self):
