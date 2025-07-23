@@ -47,10 +47,12 @@ kafka:
     - name: KAFKA_LOG_RETENTION_HOURS
       value: "168"
 
-fetcherAdminCommandsTopicName: "fetcher_admin_commands"
-kafkaAdminCommandsTopicName: "kafka_admin_commands"
-vkFetchersCommandsTopicName: "vk_fetcher_commands"
-vkPulledPostsTopicName: "vk_posts"
-botReaderKafkaTopic: "bot_reader"
+topics:
+  fetcherAdminCommandsTopicName: "fetcher_admin_commands"
+  kafkaAdminCommandsTopicName: "kafka_admin_commands"
+  vkFetchersCommandsTopicName: "vk_fetcher_commands"
+  validatorTopicName: "validator_commands"
+  writerTopicName: "writer_commands"
+  vkPulledPostsTopicName: "vk_posts"
+
 telegramBotToken: "6244825355:AAEWNuVCRWHlk4QxSLB9-eeIyytoXnOSfhI"
-botWriterKafkaTopic: "bot-writer"

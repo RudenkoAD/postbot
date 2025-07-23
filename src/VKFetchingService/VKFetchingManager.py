@@ -6,11 +6,10 @@ from common.Utils.KafkaUtils import ConsumerGroup, KafkaRouter, Topic
 from VKFetcher import VKFetcher
 from common.Commands.Command import Command
 from common.Commands.FetcherAdminCommand import (
-    AddGroupsCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand
+    AddGroupsCommand, FetcherAdminCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand
 )
 from common.Utils.Singleton import Singleton
 import asyncio
-from common.Utils.Encoder import Encoder
 import logging
 log = logging.getLogger(__name__)
 class VKFetchingManager(metaclass=Singleton):
@@ -55,7 +54,7 @@ class VKFetchingManager(metaclass=Singleton):
 
     async def __startReadingCommands(self):
         for msg in self.__vk_fetchers_command_consumer:
-            command = Encoder.decodeCommandFromJSON(msg)
+            command = FetcherAdminCommand(**msg.value)
             if command is not None:
                 log.debug(f"Got command {command}. Starting decoding")
                 await self.__processCommand(command)

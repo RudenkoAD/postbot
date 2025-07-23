@@ -8,7 +8,6 @@ class CommandTarget(str, Enum):
     KAFKA_ADMIN = "kafka_admin"
     FETCHER_ADMIN = "fetcher_admin"
 
-
 @dataclass_json
 @dataclass(kw_only=True)
 class Command:
@@ -19,4 +18,4 @@ class Command:
     """
 
     target_type: CommandTarget
-    id: int = 0
+    id: int = 0 #TODO make sure that id is unique for each command

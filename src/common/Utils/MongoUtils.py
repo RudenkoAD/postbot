@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from gc import collect
 from pymongo import MongoClient
 from pymongo.collection import Collection
 

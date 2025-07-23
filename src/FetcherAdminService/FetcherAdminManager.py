@@ -1,4 +1,5 @@
 import os
+from common.Commands.FetcherAdminCommand import FetcherAdminCommand
 from common.Utils.KafkaUtils import ConsumerGroup, KafkaRouter, Topic
 from common.Commands.Command import Command
 from common.Commands.FetcherAdminCommand import (
@@ -9,8 +10,6 @@ from common.Commands.FetcherAdminCommand import (
     RemoveApiTokenCommand,
 )
 from common.Utils.Singleton import Singleton
-import time
-from common.Utils.Encoder import Encoder
 
 
 class FetcherAdminManager(metaclass=Singleton):
@@ -25,7 +24,7 @@ class FetcherAdminManager(metaclass=Singleton):
 
     def startReadingCommands(self):
         for msg in self.__command_consumer:
-            command = Encoder.decodeCommandFromJSON(msg)
+            command = FetcherAdminCommand(**msg.value)
             self.__sendCommandToCorrespondingManager(command)
 
     def __sendCommandToCorrespondingManager(self, command):

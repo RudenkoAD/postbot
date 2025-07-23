@@ -17,8 +17,6 @@ from states import *
 from text_storage import texts
 
 from common.Utils.KafkaUtils import KafkaRouter
-import os
-from common.Commands.CommandCreator import CommandCreator
 
 add_group_router = Router()
 
