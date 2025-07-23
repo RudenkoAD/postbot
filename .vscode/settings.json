@@ -1,5 +1,7 @@
 {
     "python.analysis.extraPaths": [
         "./src/common/Utils"
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "standard"
 }

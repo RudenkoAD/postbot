@@ -3,5 +3,6 @@
 #bash only
 eval $(minikube -p minikube docker-env)
 #both
-helm uninstall postbot
+# helm uninstall postbot
 ./build.sh
+helm upgrade postbot ./helm

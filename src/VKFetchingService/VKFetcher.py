@@ -1,7 +1,7 @@
 import os
 from vkbottle import VKAPIError
 from vkbottle.api import API
-from VKFetchingWorker import VKFetchingWorker
+from VKFetchingWorker import PullingTask, VKFetchingWorker
 import logging
 log = logging.getLogger(__name__)
 class VKFetcher:
@@ -33,9 +33,10 @@ class VKFetcher:
     TIMEOUT_LENGTH = 0.5
 
 
-    def __init__(self, vk_token: str):
+    def __init__(self, pulling_tasks_queue, vk_token: str):
         log.debug(f"Started initialization of new fetcher. Initialize corresponding worker.")
-        self.__api_token = API(vk_token)
+        self.pulling_tasks_queue = pulling_tasks_queue
+        self.__api = API(vk_token)
         log.debug(f"API token initialized")
         self.__init_worker()
         super().__init__()
@@ -47,9 +48,9 @@ class VKFetcher:
                                 sleep_time=1, 
                                 vk_fetcher=self, 
                                 default_sending_topic=os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts"))
+        self.__worker.start()
 
-
-    async def updateOnGroupPosts(self, task: VKFetchingWorker.PullingTask):
+    async def updateOnGroupPosts(self, task: PullingTask):
         log.debug(f"Updating on {task.group_id} posts")
         posts = []
         for i in range(self.ITERATION_LIMIT):
@@ -68,7 +69,7 @@ class VKFetcher:
         return posts
     
 
-    async def pullGroupPosts(self, task: VKFetchingWorker.PullingTask):
+    async def pullGroupPosts(self, task: PullingTask) -> list:
         log.debug(f"Pulling for the first time from {task.group_id}")
         parameters = self.RequestParameters(domain=task.group_id)
         posts = await self.__tryPullPosts(parameters)
@@ -96,7 +97,7 @@ class VKFetcher:
                 self.__last_post_ids[group_id] = post["id"]
     
 
-    async def __tryPullPosts(self, parameters: RequestParameters):
+    async def __tryPullPosts(self, parameters: RequestParameters) -> list:
         try:
             posts = await self.__pullPosts(parameters)
             self.__updateLastPostId(parameters.getParameter("domain"), posts)
@@ -106,8 +107,8 @@ class VKFetcher:
             return []
 
 
-    async def __pullPosts(self, parameters: RequestParameters):
-        posts = await self.__api_token.request("wall.get", parameters.parameters)
+    async def __pullPosts(self, parameters: RequestParameters) -> list:
+        posts = await self.__api.request("wall.get", parameters.parameters)
         return posts["response"]["items"] 
     
 

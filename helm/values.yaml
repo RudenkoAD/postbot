@@ -1,34 +1,19 @@
-# mongodb:
-#   enabled: true
-#   architecture: replicaset
-#   replicaCount: 3
-#   auth:
-#     enabled: true
-#     rootPassword: "rootpassword"
-#     usernames:
-#       - myappuser
-#     passwords:
-#       - myapppassword
-#     databases:
-#       - myappdb
-#   persistence:
-#     enabled: true
-#     size: 8Gi
-#   service:
-#     type: ClusterIP
-#     port: 27017
-
-# mongodb-express:
-#   enabled: true
-#   mongodbServer: "mongodb://myappuser:myapppassword@mongodb:27017/myappdb"
-#   service:
-#     type: ClusterIP
-#     port: 8081
-#   ingress:
-#     enabled: true
-#     hostname: mongo-express.local
-#     annotations:
-#       kubernetes.io/ingress.class: nginx
+mongodb:
+  enabled: true
+  architecture: standalone
+  replicaCount: 1
+  auth:
+    enabled: false
+    rootPassword: "rootpassword"
+    usernames: []
+    passwords: []
+    databases: []
+  persistence:
+    enabled: true
+    size: 8Gi
+  service:
+    type: ClusterIP
+    port: 27017
 
 kafka:
   enabled: true

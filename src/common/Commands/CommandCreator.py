@@ -1,5 +1,4 @@
 from common.Utils.Singleton import Singleton
-from common.Commands.KafkaAdminCommand import CreateTopicCommand
 from common.Commands.FetcherAdminCommand import (
     AddGroupsCommand,
     RemoveGroupsCommand,
@@ -22,25 +21,6 @@ class CommandCreator(metaclass=Singleton):
     @staticmethod
     def set_id(value):
         CommandCreator.__last_id = value
-
-    @staticmethod
-    def getCreateTopicCommand(
-        topics_names: list[str], num_partitions: int = 1, replication_factor: int = 1
-    ) -> CreateTopicCommand:
-        """Creates a command to create Kafka topics.
-        Args:
-            topics_names (list[str]): List of topic names to create.
-            num_partitions (int): Number of partitions for each topic. Default is 1.
-            replication_factor (int): Replication factor for each topic. Default is 1.
-        Returns:
-            CreateTopicCommand: The command to create Kafka topics.
-        """
-        return CreateTopicCommand(
-            id=CommandCreator.get_id(),
-            topics_names=topics_names,
-            num_partitions=num_partitions,
-            replication_factor=replication_factor,
-        )
 
     @staticmethod
     def getAddGroupCommand(

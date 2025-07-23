@@ -25,7 +25,7 @@ async def consume():
             chat_id = msg.value.get("chat_id")
             text = msg.value.get("text")
             if chat_id and text:
-                await bot.send_message(chat_id, f"Echo: {text}")
+                await bot.send_message(chat_id, text)
 
 if __name__ == "__main__":
     asyncio.run(consume())

@@ -27,3 +27,7 @@ dependencies:
     version: "32.2.9"
     repository: "https://charts.bitnami.com/bitnami"
     condition: kafka.enabled
+  - name: mongodb
+    version: "14.4.6"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
