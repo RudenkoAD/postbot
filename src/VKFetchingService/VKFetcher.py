@@ -4,6 +4,9 @@ from vkbottle.api import API
 from VKFetchingWorker import PullingTask, VKFetchingWorker
 import logging
 log = logging.getLogger(__name__)
+
+VK_PULLED_POSTS_TOPIC_NAME = os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts")
+
 class VKFetcher:
     class RequestParameters:
         parameters: dict
@@ -39,16 +42,15 @@ class VKFetcher:
         self.__api = API(vk_token)
         log.debug(f"API token initialized")
         self.__init_worker()
-        super().__init__()
-
+        self.__worker.start()
 
     def __init_worker(self):
         self.__worker = VKFetchingWorker(
                                 pulling_tasks_queue=self.pulling_tasks_queue,
                                 sleep_time=1, 
                                 vk_fetcher=self, 
-                                default_sending_topic=os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts"))
-        self.__worker.start()
+                                default_sending_topic=VK_PULLED_POSTS_TOPIC_NAME)
+        
 
     async def updateOnGroupPosts(self, task: PullingTask):
         log.debug(f"Updating on {task.group_id} posts")

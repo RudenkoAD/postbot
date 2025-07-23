@@ -5,8 +5,9 @@ from kafka.consumer import KafkaConsumer
 from common.Utils.KafkaUtils import ConsumerGroup, KafkaRouter, Topic
 from VKFetcher import VKFetcher
 from common.Commands.Command import Command
+from dataclasses import asdict
 from common.Commands.FetcherAdminCommand import (
-    AddGroupsCommand, FetcherAdminCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand
+    AddGroupsCommand, CommandType, FetcherAdminCommand, RemoveGroupsCommand, ClearGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand, SocialMediaType
 )
 from common.Utils.Singleton import Singleton
 import asyncio
@@ -15,20 +16,18 @@ log = logging.getLogger(__name__)
 class VKFetchingManager(metaclass=Singleton):
     __fetchers: dict[str, VKFetcher] = dict()
     __groups: set[str] = set()
-    kafka_router: KafkaRouter
     pulling_tasks_queue: Queue
     __vk_fetchers_command_consumer: KafkaConsumer
 
 
-    def __init__(self, pulling_tasks_queue: Queue, initGroups: set = set()):
+    def __init__(self, pulling_tasks_queue: Queue, groups: set[str] = set()):
         self.pulling_tasks_queue = pulling_tasks_queue
-        self.__groups = initGroups
+        self.__groups = groups
         self.__initKafkaComponents()
 
     
     def __initKafkaComponents(self):
-        self.kafka_router = KafkaRouter()
-        self.__vk_fetchers_command_consumer = self.kafka_router.get_consumer(
+        self.__vk_fetchers_command_consumer = KafkaRouter.get_consumer(
             Topic.VK_FETCHERS_COMMANDS, ConsumerGroup.VK_FETCHERS
         )
 
@@ -37,20 +36,16 @@ class VKFetchingManager(metaclass=Singleton):
         self.__loop = asyncio.get_running_loop()
         self.__loop.create_task(self.__startPulling())
         for token in api_tokens:
-            self.__addAPIToken(AddApiTokenCommand(APIToken=token))
+            self.__addAPIToken(AddApiTokenCommand(APIToken=token, social_media_type=SocialMediaType.VK))
         self.__loop.create_task(self.__startReadingCommands())
 
 
     async def __startPulling(self):
         while True:
             if len(self.__fetchers) > 0:
-                self.__createAndSendPullingTasks()
-                await asyncio.sleep((len(self.__groups) * 0.5) / len(self.__fetchers))
-
-
-    def __createAndSendPullingTasks(self):
-        for group_id in self.__groups:
-            self.pulling_tasks_queue.put(group_id)
+                for group_id in self.__groups:
+                    self.pulling_tasks_queue.put(group_id)
+            await asyncio.sleep((len(self.__groups) * 0.5) / len(self.__fetchers))
 
     async def __startReadingCommands(self):
         for msg in self.__vk_fetchers_command_consumer:
@@ -62,29 +57,35 @@ class VKFetchingManager(metaclass=Singleton):
                 log.error(f"Command {msg.value} is incorrect. Dropping command")
 
 
-    async def __processCommand(self, command: Command):
-        if isinstance(command, AddGroupsCommand):
-            log.debug(f"Decoded AddGroupsCommand. Starting processing")
-            self.__addGroups(command)
-        elif isinstance(command, RemoveGroupsCommand):
-            log.debug(f"Decoded RemoveGroupsCommand. Starting processing")
-            self.__removeGroups(command)
-        elif isinstance(command, ClearGroupsCommand):
-            log.debug(f"Decoded ClearGroupsCommand. Starting processing")
-            self.__clearGroups(command)
-        elif isinstance(command, AddApiTokenCommand):
-            log.debug(f"Decoded AddApiTokenCommand. Starting processing")
-            self.__addAPIToken(command)
-        elif isinstance(command, RemoveApiTokenCommand):
-            log.debug(f"Decoded RemoveApiTokenCommand. Starting processing")
-            self.__removeAPIToken(command)
-        else:
-            log.debug(f"Decoded UNKNOWN command. Dropping command")
+    async def __processCommand(self, command: FetcherAdminCommand):
+        match(command.command_type):
+            case CommandType.ADD_GROUPS:
+                command = AddGroupsCommand(**asdict(command))
+                log.debug(f"Decoded AddGroupsCommand. Starting processing")
+                self.__addGroups(command)
+            case CommandType.REMOVE_GROUPS:
+                command = RemoveGroupsCommand(**asdict(command))
+                log.debug(f"Decoded RemoveGroupsCommand. Starting processing")
+                self.__removeGroups(command)
+            case CommandType.CLEAR_GROUPS:
+                command = ClearGroupsCommand(**asdict(command))
+                log.debug(f"Decoded ClearGroupsCommand. Starting processing")
+                self.__clearGroups(command)
+            case CommandType.ADD_API_TOKEN:
+                command = AddApiTokenCommand(**asdict(command))
+                log.debug(f"Decoded AddApiTokenCommand. Starting processing")
+                self.__addAPIToken(command)
+            case CommandType.REMOVE_API_TOKEN:
+                command = RemoveApiTokenCommand(**asdict(command))
+                log.debug(f"Decoded RemoveApiTokenCommand. Starting processing")
+                self.__removeAPIToken(command)
+            case _:
+                log.debug(f"Decoded UNKNOWN command. Dropping command")
 
 
     def __addGroups(self, command: AddGroupsCommand):
         for group in command.groups:
-            if not self.__checkIfGroupObserved(group) and self.__isValidVkGroup(group):
+            if not group in self.__groups and self.__isValidVkGroup(group):
                 self.__groups.add(group)
             else:
                 log.warning(f"Skipped invalid or duplicate VK group: {group}")
@@ -105,12 +106,8 @@ class VKFetchingManager(metaclass=Singleton):
 
     def __removeGroups(self, command: RemoveGroupsCommand):
         for group in command.groups:
-            if not self.__checkIfGroupObserved(group):
+            if not group in self.__groups:
                 self.__groups.remove(group)
-
-
-    def __checkIfGroupObserved(self, group: str) -> bool:
-        return group in self.__groups
     
 
     def __clearGroups(self, command: ClearGroupsCommand):
@@ -118,12 +115,21 @@ class VKFetchingManager(metaclass=Singleton):
 
 
     def __addAPIToken(self, command: AddApiTokenCommand):
-        self.__fetchers[command.APIToken] = VKFetcher(
-            pulling_tasks_queue=self.pulling_tasks_queue,
-            vk_token=command.APIToken,
-        )
+        if command.APIToken in self.__fetchers:
+            log.warning(f"API token {command.APIToken} already exists. Skipping addition.")
+            return
+        else:
+            log.debug(f"Adding API token {command.APIToken} to fetchers")
+            self.__fetchers[command.APIToken] = VKFetcher(
+                pulling_tasks_queue=self.pulling_tasks_queue,
+                vk_token=command.APIToken,
+            )
 
 
     def __removeAPIToken(self, command: RemoveApiTokenCommand):
-        if self.__fetchers.get(command.APIToken) is not None:
+        if command.APIToken not in self.__fetchers:
+            log.warning(f"API token {command.APIToken} does not exist. Skipping removal.")
+            return
+        else:
+            log.debug(f"Removing API token {command.APIToken} from fetchers")
             self.__fetchers.pop(command.APIToken)

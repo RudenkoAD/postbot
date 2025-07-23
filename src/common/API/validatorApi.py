@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from common.Commands.FetcherAdminCommand import SocialMediaType
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class GroupValidationRequest:
     """
     Represents a request to validate a group.
@@ -18,7 +18,7 @@ class GroupValidationRequest:
     user_id: int
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class GroupValidationResponse:
     """
     Represents the response to a group validation request.

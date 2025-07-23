@@ -8,6 +8,7 @@ from kafka.consumer import KafkaConsumer
 from common.API.validatorApi import GroupValidationRequest
 from common.API.botWriterApi import MessageWriteRequest
 from common.Commands.Command import Command
+from common.Commands.FetcherAdminCommand import AddGroupsCommand, ClearGroupsCommand, RemoveGroupsCommand, AddApiTokenCommand, RemoveApiTokenCommand, FetcherAdminCommand, CommandType
 
 log = logging.getLogger(__name__)
 
@@ -65,4 +66,27 @@ class KafkaRouter:
             bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
             group_id=consumer_group,
             value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+        )
+        
+    @staticmethod
+    def get_command_consumer(consumer_group: ConsumerGroup) -> KafkaConsumer:
+        def command_from_dict(d: dict) -> Command:
+            cmd_type = d.get("command_type")
+            if cmd_type == "add_groups":
+                return AddGroupsCommand(**d)
+            elif cmd_type == "remove_groups":
+                return RemoveGroupsCommand(**d)
+            elif cmd_type == "clear_groups":
+                return ClearGroupsCommand(**d)
+            elif cmd_type == "add_api_token":
+                return AddApiTokenCommand(**d)
+            elif cmd_type == "remove_api_token":
+                return RemoveApiTokenCommand(**d)
+            else:
+                return FetcherAdminCommand(**d)
+            
+        return KafkaConsumer(
+            bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+            group_id=consumer_group,
+            value_deserializer=lambda m: command_from_dict(json.loads(m.decode("utf-8"))),
         )

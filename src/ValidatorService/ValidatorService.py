@@ -5,7 +5,7 @@ from MongoUtils import MongoInterface
 from common.API.validatorApi import GroupValidationRequest
 from common.API.botWriterApi import MessageWriteRequest
 from KafkaUtils import KafkaRouter
-from common.Commands.FetcherAdminCommand import AddGroupsCommand
+from common.Commands.FetcherAdminCommand import AddGroupsCommand, SocialMediaType
 import vkbottle
 import logging
 
@@ -51,7 +51,7 @@ class ValidatorService:
                 logging.info(f"Group {data.group_id} is valid.")
                 self.kafka_router.send_command_to_topic(
                     topic=ADD_GROUP_TOPIC,
-                    command=AddGroupsCommand(groups={data.group_id}),
+                    command=AddGroupsCommand(groups={data.group_id}, social_media_type=SocialMediaType.VK),
                 )
                 self.mongo_interface.add_group_user_link(data.group_id, data.user_id)
                 self.kafka_router.send_to_writer(
