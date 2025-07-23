@@ -51,11 +51,15 @@ class ValidatorService:
                 logging.info(f"Group {data.group_id} is valid.")
                 self.kafka_router.send_command_to_topic(
                     topic=ADD_GROUP_TOPIC,
-                    command=AddGroupsCommand(groups={data.group_id}, social_media_type=SocialMediaType.VK),
+                    command=AddGroupsCommand(
+                        groups={data.group_id}, social_media_type=SocialMediaType.VK
+                    ),
                 )
                 self.mongo_interface.add_group_user_link(data.group_id, data.user_id)
                 self.kafka_router.send_to_writer(
-                    MessageWriteRequest(chat_id=data.user_id, text=f"Group {data.group_id} is valid.")
+                    MessageWriteRequest(
+                        chat_id=data.user_id, text=f"Group {data.group_id} is valid."
+                    )
                 )
             else:
                 logging.error(f"Group {data.group_id} is invalid.")

@@ -5,10 +5,12 @@ from vkbottle import API
 from common.Commands.Command import Command
 from typing import ClassVar
 
+
 class SocialMediaType(Enum):
     VK = "vk"
     Twitter = "twitter"
     LinkedIn = "linkedin"
+
 
 class CommandType(Enum):
     ADD_GROUPS = "add_groups"
@@ -17,6 +19,7 @@ class CommandType(Enum):
     ADD_API_TOKEN = "add_api_token"
     REMOVE_API_TOKEN = "remove_api_token"
 
+
 @dataclass_json
 @dataclass(kw_only=True)
 class FetcherAdminCommand(Command):
@@ -24,9 +27,10 @@ class FetcherAdminCommand(Command):
     Attributes:
         social_media_type (SocialMediaType): The type of social media.
     """
+
     command_type: ClassVar[CommandType]
     social_media_type: SocialMediaType
-    
+
 
 @dataclass_json
 @dataclass
@@ -35,6 +39,7 @@ class AddGroupsCommand(FetcherAdminCommand):
     Attributes:
         groups (set[str]): Set of group IDs to add.
     """
+
     groups: set[str]
     command_type: ClassVar[CommandType] = CommandType.ADD_GROUPS
 
@@ -46,6 +51,7 @@ class RemoveGroupsCommand(FetcherAdminCommand):
     Attributes:
         groups (set[str]): Set of group IDs to remove.
     """
+
     groups: set[str]
     command_type: ClassVar[CommandType] = CommandType.REMOVE_GROUPS
 
@@ -69,4 +75,3 @@ class AddApiTokenCommand(FetcherAdminCommand):
 class RemoveApiTokenCommand(FetcherAdminCommand):
     APIToken: str = ""
     command_type: ClassVar[CommandType] = CommandType.REMOVE_API_TOKEN
-

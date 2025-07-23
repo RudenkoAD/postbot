@@ -29,7 +29,7 @@ class MongoInterface:
         collection_name = "users"  # Replace with your collection name
         collection = self.get_mongo_collection(self.db.name, collection_name)
         collection.insert_one(asdict(user))
-    
+
     def insert_group(self, group: dict):
         """
         Insert a group document into the collection.
@@ -39,7 +39,7 @@ class MongoInterface:
         collection_name = "groups"
         collection = self.get_mongo_collection(self.db.name, collection_name)
         collection.insert_one(group)
-    
+
     def add_group_user_link(self, group_id: str, user_id: int):
         """
         Add a link between a group and a user.
@@ -49,15 +49,11 @@ class MongoInterface:
         """
         group_collection_name = "groups"
         collection = self.get_mongo_collection(self.db.name, group_collection_name)
-        collection.update_one(
-            {"group_id": group_id},
-            {"$addToSet": {"users": user_id}}
-        )
+        collection.update_one({"group_id": group_id}, {"$addToSet": {"users": user_id}})
         user_collection_name = "users"
         user_collection = self.get_mongo_collection(self.db.name, user_collection_name)
         user_collection.update_one(
-            {"user_id": user_id},
-            {"$addToSet": {"groups": group_id}}
+            {"user_id": user_id}, {"$addToSet": {"groups": group_id}}
         )
 
     def remove_group_user_link(self, group_id: str, user_id: int):
@@ -69,17 +65,13 @@ class MongoInterface:
         """
         group_collection_name = "groups"
         collection = self.get_mongo_collection(self.db.name, group_collection_name)
-        collection.update_one(
-            {"group_id": group_id},
-            {"$pull": {"users": user_id}}
-        )
+        collection.update_one({"group_id": group_id}, {"$pull": {"users": user_id}})
         user_collection_name = "users"
         user_collection = self.get_mongo_collection(self.db.name, user_collection_name)
         user_collection.update_one(
-            {"user_id": user_id},
-            {"$pull": {"groups": group_id}}
+            {"user_id": user_id}, {"$pull": {"groups": group_id}}
         )
-        
+
     def get_user_groups(self, user_id: int) -> set[str]:
         """
         Get a list of groups for a user.
@@ -90,7 +82,7 @@ class MongoInterface:
         collection = self.get_mongo_collection(self.db.name, user_collection_name)
         user = collection.find_one({"user_id": user_id})
         return set(user.get("groups", [])) if user else set()
-    
+
     def get_group_users(self, group_id: str) -> set[int]:
         """
         Get a list of users for a group.

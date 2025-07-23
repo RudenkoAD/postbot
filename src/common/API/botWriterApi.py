@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(eq=True, frozen=True)
 class MessageWriteRequest:
     """
@@ -8,6 +9,6 @@ class MessageWriteRequest:
         chat_id (int): The ID of the chat where the message will be sent.
         text (str): The content of the message to be sent.
     """
+
     chat_id: int
     text: str
-    

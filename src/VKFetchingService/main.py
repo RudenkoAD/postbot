@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from VKFetchingManager import VKFetchingManager
+
 logging.basicConfig(level=logging.DEBUG)
 from queue import Queue
 

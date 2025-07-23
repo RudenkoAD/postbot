@@ -1,23 +1,17 @@
 import os
-import json
 from aiogram import Bot
-from kafka import KafkaConsumer
+from KafkaUtils import ConsumerGroup, KafkaRouter, Topic
+import asyncio
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "tg-updates")
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "your-telegram-bot-token")
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
-consumer = KafkaConsumer(
-    KAFKA_TOPIC,
-    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-    value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-    auto_offset_reset='earliest',
-    enable_auto_commit=True,
-    group_id='bot-writer-group'
+consumer = KafkaRouter.get_consumer(
+    topic=Topic.WRITER,
+    consumer_group=ConsumerGroup.WRITER,
 )
 
-import asyncio
 
 async def consume():
     async with bot:
@@ -26,6 +20,7 @@ async def consume():
             text = msg.value.get("text")
             if chat_id and text:
                 await bot.send_message(chat_id, text)
+
 
 if __name__ == "__main__":
     asyncio.run(consume())
