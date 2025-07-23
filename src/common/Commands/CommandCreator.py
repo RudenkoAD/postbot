@@ -44,17 +44,15 @@ class CommandCreator(metaclass=Singleton):
 
     @staticmethod
     def getAddGroupCommand(
-        social_media_type: SocialMediaType, groups: set[str], APIToken: str = ""
+        social_media_type: SocialMediaType, groups: set[str]
     ) -> AddGroupsCommand:
         """Creates a command to add groups to the Fetcher Admin Service.
         Args:
             social_media_type (SocialMediaType): The type of social media.
             groups (set[str]): Set of group IDs to add.
-            APIToken (str): API token for the Fetcher Admin Service. Default is an empty string.
         """
         return AddGroupsCommand(
             id=CommandCreator.get_id(),
             social_media_type=social_media_type,
             groups=groups,
-            APIToken=APIToken,
         )

@@ -4,9 +4,9 @@ from enum import Enum
 from typing import TypeVar, Generic
 
 
-class CommandTarget(Enum):
-    KAFKA_ADMIN = 0
-    FETCHER_ADMIN = 1
+class CommandTarget(str, Enum):
+    KAFKA_ADMIN = "kafka_admin"
+    FETCHER_ADMIN = "fetcher_admin"
 
 
 @dataclass_json
