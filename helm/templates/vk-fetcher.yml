@@ -9,8 +9,8 @@ spec:
     imagePullPolicy: Never
     env:
     - name: VK_FETCHERS_COMMANDS_TOPIC_NAME
-      value: {{ .Values.vkFetchersCommandsTopicName | default "vk_fetcher_commands" }}
+      value: {{ .Values.topics.vkFetchersCommandsTopicName | default "vk_fetcher_commands" }}
     - name: VK_PULLED_POSTS_TOPIC_NAME
-      value: {{ .Values.vkPulledPostsTopicName | default "vk_posts" }}
+      value: {{ .Values.topics.vkPulledPostsTopicName | default "vk_posts" }}
     - name: KAFKA_BOOTSTRAP_SERVERS
       value: {{.Release.Name}}-kafka

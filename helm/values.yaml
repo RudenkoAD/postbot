@@ -54,5 +54,29 @@ topics:
   validatorTopicName: "validator_commands"
   writerTopicName: "writer_commands"
   vkPulledPostsTopicName: "vk_posts"
+  botReaderKafkaTopic: "bot_reader_commands"
+  botWriterKafkaTopic: "bot_writer_commands"
 
 telegramBotToken: "6244825355:AAEWNuVCRWHlk4QxSLB9-eeIyytoXnOSfhI"
+
+flink:
+  enabled: true
+  jobmanager:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+  taskmanager:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+  service:
+    type: ClusterIP
+    rpcPort: 6123
+    blobPort: 6124
+    uiPort: 8081
+  persistence:
+    enabled: false

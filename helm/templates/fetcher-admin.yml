@@ -9,10 +9,10 @@ spec:
     imagePullPolicy: Never
     env:
     - name: KAFKA_ADMIN_COMMANDS_TOPIC_NAME
-      value: {{ .Values.kafkaAdminCommandsTopicName | default "kafka_admin_commands" }}
+      value: {{ .Values.topics.kafkaAdminCommandsTopicName | default "kafka_admin_commands" }}
     - name: FETCHER_ADMIN_COMMANDS_TOPIC_NAME
-      value: {{ .Values.fetcherAdminCommandsTopicName | default "fetcher_admin_commands" }}
+      value: {{ .Values.topics.fetcherAdminCommandsTopicName | default "fetcher_admin_commands" }}
     - name: VK_FETCHERS_COMMANDS_TOPIC_NAME
-      value: {{ .Values.vkFetchersCommandsTopicName | default "vk_fetcher_commands" }}
+      value: {{ .Values.topics.vkFetchersCommandsTopicName | default "vk_fetcher_commands" }}
     - name: KAFKA_BOOTSTRAP_SERVERS
       value: {{.Release.Name}}-kafka

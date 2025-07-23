@@ -10,7 +10,5 @@ spec:
     env:
     - name: TELEGRAM_BOT_TOKEN
       value: {{ .Values.telegramBotToken}}
-    - name: BOT_READER_KAFKA_TOPIC
-      value: {{ .Values.botReaderKafkaTopic}}
     - name: KAFKA_BOOTSTRAP_SERVERS
       value: {{.Release.Name}}-kafka

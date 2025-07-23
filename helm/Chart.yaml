@@ -31,3 +31,7 @@ dependencies:
     version: "14.4.6"
     repository: "https://charts.bitnami.com/bitnami"
     condition: mongodb.enabled
+  - name: flink
+    version: "5.2.2"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: flink.enabled
