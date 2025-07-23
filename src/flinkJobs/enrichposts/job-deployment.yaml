@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-enrichposts-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: flink-enrichposts
+        image: flink:1.17-python
+        command: ["python", "/opt/flink_jobs/enrichposts/job.py"]
+        env:
+        - name: PYTHONPATH
+          value: "/opt/flink_jobs/enrichposts"
+        volumeMounts:
+        - name: flink-jobs
+          mountPath: /opt/flink_jobs
+      restartPolicy: Never
+      volumes:
+      - name: flink-jobs
+        hostPath:
+          path: /absolute/path/to/your/src/flinkJobs
+          type: Directory
