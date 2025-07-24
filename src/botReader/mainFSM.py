@@ -13,7 +13,9 @@ from aiogram.types import (
 from keyboards import keyboards
 from states import *
 from text_storage import texts
+
 main_menu_router = Router()
+
 
 @main_menu_router.message(ScreenStates.main, F.text.casefold() == "добавить группу")
 async def go_to_addgroup(message: Message, state: FSMContext) -> None:
@@ -22,6 +24,7 @@ async def go_to_addgroup(message: Message, state: FSMContext) -> None:
         texts[AddGroupStates.link],
         reply_markup=keyboards[AddGroupStates.link],
     )
+
 
 @main_menu_router.message(ScreenStates.main, F.text.casefold() == "профиль")
 async def go_to_profile(message: Message, state: FSMContext) -> None:

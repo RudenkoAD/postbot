@@ -10,14 +10,24 @@ from aiogram.types import (
 from states import AddGroupStates, ScreenStates
 
 keyboards = {
-    AddGroupStates.link: ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text = "отмена")]
-    ]),
-    AddGroupStates.accept: ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text = "да"),KeyboardButton(text = "нет"),],
-        [KeyboardButton(text = "отмена")]
-    ]),
-    ScreenStates.main: ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text = "добавить группу"),KeyboardButton(text = "профиль"),],
-    ]),
+    AddGroupStates.link: ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="отмена")]]
+    ),
+    AddGroupStates.accept: ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text="да"),
+                KeyboardButton(text="нет"),
+            ],
+            [KeyboardButton(text="отмена")],
+        ]
+    ),
+    ScreenStates.main: ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text="добавить группу"),
+                KeyboardButton(text="профиль"),
+            ],
+        ]
+    ),
 }

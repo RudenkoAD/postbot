@@ -1,8 +1,8 @@
 FROM base:latest
-
 WORKDIR /app
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
 
-CMD ["faust", "-A", "app", "worker", "-l", "info"]
+COPY . .
+CMD ["python3", "ValidatorService.py"]

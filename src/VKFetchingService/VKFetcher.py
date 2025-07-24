@@ -1,125 +1,141 @@
 import os
+import logging
+from xml import dom
 from vkbottle import VKAPIError
 from vkbottle.api import API
-from VKFetchingWorker import PullingTask, VKFetchingWorker
-import logging
+from dataclasses import dataclass
+from common.Utils.KafkaUtils import KafkaRouter
+import asyncio
 
 log = logging.getLogger(__name__)
 
 VK_PULLED_POSTS_TOPIC_NAME = os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts")
 
 
+@dataclass
+class PullingTask:
+    group_id: str
+    sending_topic: str | None = None
+
+
 class VKFetcher:
-    class RequestParameters:
-        parameters: dict
-
-        def __init__(self, domain=None, count=None, offset=None):
-            if domain is not None:
-                self.parameters = {"domain": domain}
-            else:
-                self.parameters = {"domain": ""}
-            self.addParameter("count", count)
-            self.addParameter("offset", offset)
-
-        def addParameter(self, parameter_name: str, parameter=None):
-            if parameter is not None:
-                self.parameters[parameter_name] = parameter
-
-        def getParameter(self, key):
-            return self.parameters.get(key)
-
-    __worker: VKFetchingWorker
-    __last_post_ids: dict[str, int] = dict()
-
+    _last_post_ids: dict[str, int] = {}
     ITERATION_LIMIT = 10
     POSTS_PACK_SIZE = 10
     TIMEOUT_LENGTH = 0.5
 
-    def __init__(self, pulling_tasks_queue, vk_token: str):
-        log.debug(
-            f"Started initialization of new fetcher. Initialize corresponding worker."
-        )
+    def __init__(
+        self,
+        pulling_tasks_queue,
+        vk_token: str,
+        sleep_time: int = 1,
+        default_sending_topic: str = VK_PULLED_POSTS_TOPIC_NAME,
+    ):
+        log.debug("Started initialization of VKFetcher.")
         self.pulling_tasks_queue = pulling_tasks_queue
-        self.__api = API(vk_token)
-        log.debug(f"API token initialized")
-        self.__init_worker()
-        self.__worker.start()
+        self._api = API(vk_token)
+        log.debug("API token initialized")
+        self._sleep_time = sleep_time
+        self._default_sending_topic = default_sending_topic
+        self._init_kafka_components()
+        self._loop = asyncio.get_event_loop()
+        self._loop.create_task(self._start_pulling_loop())
 
-    def __init_worker(self):
-        self.__worker = VKFetchingWorker(
-            pulling_tasks_queue=self.pulling_tasks_queue,
-            sleep_time=1,
-            vk_fetcher=self,
-            default_sending_topic=VK_PULLED_POSTS_TOPIC_NAME,
-        )
+    def _init_kafka_components(self):
+        self._kafka_router = KafkaRouter()
 
-    async def updateOnGroupPosts(self, task: PullingTask):
+    async def _start_pulling_loop(self):
+        while True:
+            task = self._get_next_task()
+            if not self.has_been_pulled(task.group_id):
+                self._loop.create_task(self._pull_group_and_send(task))
+            else:
+                self._loop.create_task(self._update_on_group_and_send(task))
+            await asyncio.sleep(self._sleep_time)
+
+    def _get_next_task(self) -> PullingTask:
+        group_id = self.pulling_tasks_queue.get()
+        return PullingTask(group_id=group_id)
+
+    async def _pull_group_and_send(self, task: PullingTask):
+        posts = await self.pull_group_posts(task)
+        if posts is not None:
+            for post in posts:
+                self._kafka_router.send_dict_to_topic(
+                    self.get_sending_topic(task), post
+                )
+        return posts
+
+    async def _update_on_group_and_send(self, task: PullingTask):
+        posts = await self.update_on_group_posts(task)
+        if posts is not None:
+            for post in posts:
+                self._kafka_router.send_dict_to_topic(
+                    self.get_sending_topic(task), post
+                )
+        return posts
+
+    def get_sending_topic(self, task: PullingTask) -> str:
+        return self._default_sending_topic
+
+    async def update_on_group_posts(self, task: PullingTask):
         log.debug(f"Updating on {task.group_id} posts")
         posts = []
         for i in range(self.ITERATION_LIMIT):
-            parameters = self.RequestParameters(
+            posts_pack = await self._try_pull_posts(
                 domain=task.group_id,
                 count=self.POSTS_PACK_SIZE,
                 offset=self.POSTS_PACK_SIZE * i,
             )
-            posts_pack = await self.__tryPullPosts(parameters)
             if posts_pack is None:
                 break
-            new_posts = self.__findPostsNewerThenLastPost(
+            new_posts = self._find_posts_newer_than_last(
                 group_id=task.group_id, posts_pack=posts_pack
             )
-            if len(new_posts) > 0:
+            if new_posts:
                 posts.extend(new_posts)
             else:
                 break
         return posts
 
-    async def pullGroupPosts(self, task: PullingTask) -> list:
+    async def pull_group_posts(self, task: PullingTask) -> list:
         log.debug(f"Pulling for the first time from {task.group_id}")
-        parameters = self.RequestParameters(domain=task.group_id)
-        posts = await self.__tryPullPosts(parameters)
-        return posts
+        return await self._try_pull_posts(
+            domain=task.group_id, count=self.POSTS_PACK_SIZE, offset=0
+        )
 
-    def __getLastPostId(self, group_id) -> int:
-        last_post_id = self.__last_post_ids.get(group_id)
-        if last_post_id is not None:
-            return last_post_id
-        else:
-            return 0
+    def _get_last_post_id(self, group_id) -> int:
+        return self._last_post_ids.get(group_id, 0)
 
-    def __findPostsNewerThenLastPost(self, group_id, posts_pack):
+    def _find_posts_newer_than_last(self, group_id, posts_pack):
+        last_post_id = self._get_last_post_id(group_id)
         return [
             post
             for post in posts_pack
-            if post["id"] is not None
-            and post["id"] > self.__getLastPostId(group_id=group_id)
+            if post.get("id") is not None and post["id"] > last_post_id
         ]
 
-    def __updateLastPostId(self, group_id, posts):
-        if posts is None:
+    def _update_last_post_id(self, group_id, posts):
+        if not posts:
             return
-
         for post in posts:
-            if self.__getLastPostId(group_id=group_id) < post["id"]:
-                self.__last_post_ids[group_id] = post["id"]
+            if self._get_last_post_id(group_id) < post["id"]:
+                self._last_post_ids[group_id] = post["id"]
 
-    async def __tryPullPosts(self, parameters: RequestParameters) -> list:
+    async def _try_pull_posts(self, domain, count, offset) -> list:
         try:
-            posts = await self.__pullPosts(parameters)
-            self.__updateLastPostId(parameters.getParameter("domain"), posts)
+            posts = await self._pull_posts(domain, count, offset)
+            self._update_last_post_id(domain, posts)
             return posts
         except VKAPIError as error:
-            log.debug(
-                f"Couldn't get new posts for {parameters.getParameter("domain")}. Error: {error}"
-            )
+            log.debug(f"Couldn't get new posts for {domain}. Error: {error}")
             return []
 
-    async def __pullPosts(self, parameters: RequestParameters) -> list:
-        posts = await self.__api.request("wall.get", parameters.parameters)
+    async def _pull_posts(self, domain, count, offset) -> list:
+        posts = await self._api.request(
+            "wall.get", {"domain": domain, "count": count, "offset": offset}
+        )
         return posts["response"]["items"]
 
-    def isBeenPulledFirstTime(self, group_id) -> bool:
-        if self.__last_post_ids.get(group_id) is None:
-            return True
-        else:
-            return False
+    def has_been_pulled(self, group_id) -> bool:
+        return self._last_post_ids.get(group_id) is not None

@@ -14,7 +14,7 @@ class Post:
     group_id: str
     post_id: int
     text: str
-    attachments: list[str] = None
+    attachments: list[str] | None = None
 
 
 class EnrichedPost(Post):
@@ -23,4 +23,4 @@ class EnrichedPost(Post):
     Inherits from Post and adds a list of user IDs associated with the post.
     """
 
-    user_ids: list[int] = None
+    user_ids: list[int]

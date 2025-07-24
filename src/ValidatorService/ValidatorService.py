@@ -1,28 +1,21 @@
 import os
-import json
-from kafka import KafkaConsumer, KafkaProducer
-from MongoUtils import MongoInterface
+from common.Utils.MongoUtils import MongoInterface
 from common.API.validatorApi import GroupValidationRequest
 from common.API.botWriterApi import MessageWriteRequest
-from KafkaUtils import KafkaRouter
+from common.Utils.KafkaUtils import KafkaRouter, Topic, ConsumerGroup
 from common.Commands.FetcherAdminCommand import AddGroupsCommand, SocialMediaType
 import vkbottle
 import logging
 
 logging.basicConfig(level=logging.INFO)
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-ADD_GROUP_TOPIC = os.getenv("ADD_GROUP_TOPIC", "add-group-requests")
-VALIDATOR_GROUP_ID = os.getenv("VALIDATOR_GROUP_ID", "validator-service")
 VALIDATOR_API_TOKEN = os.getenv("VALIDATOR_API_TOKEN", "validator-api-token")
 
 
 class ValidatorService:
     def __init__(self):
-        self.consumer = KafkaConsumer(
-            ADD_GROUP_TOPIC,
-            bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-            group_id=VALIDATOR_GROUP_ID,
-            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+        self.consumer = KafkaRouter.get_consumer(
+            topic=Topic.VALIDATOR,
+            consumer_group=ConsumerGroup.VALIDATOR,
         )
         self.kafka_router = KafkaRouter()
         self.mongo_interface = MongoInterface()
@@ -50,7 +43,7 @@ class ValidatorService:
             if valid:
                 logging.info(f"Group {data.group_id} is valid.")
                 self.kafka_router.send_command_to_topic(
-                    topic=ADD_GROUP_TOPIC,
+                    topic=Topic.FETCHER_ADMIN_COMMANDS,
                     command=AddGroupsCommand(
                         groups={data.group_id}, social_media_type=SocialMediaType.VK
                     ),

@@ -48,7 +48,7 @@ class MongoInterface:
         :param collection: MongoDB collection
         :param user: User document to insert
         """
-        collection_name = "users"  # Replace with your collection name
+        collection_name = "users"
         collection = self.get_collection(collection_name)
         collection.insert_one(asdict(user))
 

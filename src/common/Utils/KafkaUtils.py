@@ -32,9 +32,6 @@ class Topic(str, Enum):
     VK_FETCHERS_COMMANDS = os.getenv(
         "VK_FETCHERS_COMMANDS_TOPIC_NAME", "vk_fetcher_commands"
     )
-    KAFKA_ADMIN_COMMANDS = os.getenv(
-        "KAFKA_ADMIN_COMMANDS_TOPIC_NAME", "kafka_admin_commands"
-    )
 
 
 class ConsumerGroup(str, Enum):
@@ -42,7 +39,6 @@ class ConsumerGroup(str, Enum):
     WRITER = "writer_service"
     FETCHER_ADMIN = "fetcher_admin_service"
     VK_FETCHERS = "vk_fetchers_service"
-    KAFKA_ADMIN = "kafka_admin_service"
 
 
 class KafkaRouter:

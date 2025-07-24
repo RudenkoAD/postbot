@@ -1,6 +1,6 @@
 import os
 from aiogram import Bot
-from KafkaUtils import ConsumerGroup, KafkaRouter, Topic
+from common.Utils.KafkaUtils import ConsumerGroup, KafkaRouter, Topic
 import asyncio
 
 

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: validator
+spec:
+  containers:
+  - name: validator
+    image: validator-service:latest
+    imagePullPolicy: Never
+    env:
+    - name: KAFKA_BOOTSTRAP_SERVERS
+      value: {{.Release.Name}}-kafka

@@ -1,30 +1,23 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   name: faust-enrichposts
+  labels:
+    app: faust-enrichposts
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: faust-enrichposts
-  template:
-    metadata:
-      labels:
-        app: faust-enrichposts
-    spec:
-      containers:
-      - name: faust-enrichposts
-        image: "faust-enrichposts:latest"
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: KAFKA_BROKER
-          value: {{.Release.Name}}-kafka
-        - name: MONGO_URI
-          value: "mongodb://{{ .Values.mongodb.service.type }}:{{ .Values.mongodb.service.port }}/"
-        - name: VK_POSTS_TOPIC
-          value: "{{ .Values.topics.vkPulledPostsTopicName }}"
-        - name: ENRICHED_TOPIC
-          value: "{{ .Values.topics.enrichedVkPostsTopicName }}"
-        ports:
-        - containerPort: 6066 # Faust web port (optional)
-        command: ["faust", "-A", "app", "worker", "-l", "info"]
+  containers:
+  - name: faust-enrichposts
+    image: "faust-enrichposts:latest"
+    imagePullPolicy: IfNotPresent
+    env:
+    - name: KAFKA_BROKER
+      value: {{.Release.Name}}-kafka
+    - name: MONGO_URI
+      value: "mongodb://{{ .Values.mongodb.service.type }}:{{ .Values.mongodb.service.port }}/"
+    - name: VK_POSTS_TOPIC
+      value: "{{ .Values.topics.vkPulledPostsTopicName }}"
+    - name: ENRICHED_TOPIC
+      value: "{{ .Values.topics.enrichedVkPostsTopicName }}"
+    ports:
+    - containerPort: 6066 # Faust web port (optional)
+    command: ["faust", "-A", "app", "worker", "-l", "info"]

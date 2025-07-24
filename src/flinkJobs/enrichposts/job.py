@@ -1,3 +1,8 @@
+import six
+import sys
+
+if sys.version_info >= (3, 12, 0):
+    sys.modules["kafka.vendor.six.moves"] = six.moves
 import faust
 from pymongo import MongoClient
 from common.Utils.MongoUtils import MongoInterface

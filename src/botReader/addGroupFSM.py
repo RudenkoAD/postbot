@@ -16,9 +16,11 @@ from keyboards import keyboards
 from states import *
 from text_storage import texts
 
+add_group_router = Router()
+
 from common.Utils.KafkaUtils import KafkaRouter
 
-add_group_router = Router()
+kafka_router = KafkaRouter()
 
 
 @add_group_router.message(AddGroupStates.accept, F.text.casefold() == "нет")
@@ -107,7 +109,6 @@ async def add_group_link_link(message: Message, state: FSMContext) -> None:
         "Проверяем группу, пожалуйста подождите",
         reply_markup=ReplyKeyboardRemove(),
     )
-    kafka_router = KafkaRouter()
     data = GroupValidationRequest(
         social_media_type=SocialMediaType.VK,
         group_id=group_link,

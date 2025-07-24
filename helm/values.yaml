@@ -54,9 +54,9 @@ topics:
   validatorTopicName: "validator_commands"
   writerTopicName: "writer_commands"
   vkPulledPostsTopicName: "vk_posts"
+  enrichedVkPostsTopicName: "enriched_vk_posts"
   botReaderKafkaTopic: "bot_reader_commands"
   botWriterKafkaTopic: "bot_writer_commands"
-  enrichedVkPostsTopicName: "enriched_vk_posts"
 
 telegramBotToken: "6244825355:AAEWNuVCRWHlk4QxSLB9-eeIyytoXnOSfhI"
 
