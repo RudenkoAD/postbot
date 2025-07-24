@@ -1,14 +1,8 @@
-FROM apache/flink:1.17-python
+FROM base:latest
 
-# Set working directory
-WORKDIR /opt/flink_jobs/enrichposts
-
-# Copy job code and requirements
-COPY job.py ./
-COPY requirements.txt ./
-
-# Install Python dependencies
+WORKDIR /app
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 
-# Set the entrypoint for the job (can be overridden by k8s job spec)
-ENTRYPOINT ["python", "job.py"]
+CMD ["faust", "worker", "-A", "enrichposts.app", "--web-port=5555", "--loglevel=info", "--broker=kafka://{{ .Release.Name }}-kafka:9092"]

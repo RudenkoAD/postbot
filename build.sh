@@ -6,3 +6,4 @@ docker build -f src/FetcherAdminService/Dockerfile -t fetcher-admin:latest src/F
 docker build -f src/VKFetchingService/Dockerfile -t vk-fetcher:latest src/VKFetchingService
 docker build -f src/botReader/Dockerfile -t bot-reader:latest src/botReader
 docker build -f src/botWriter/Dockerfile -t bot-writer:latest src/botWriter
+docker build -f src/faust-enrichposts/Dockerfile -t faust-enrichposts:latest src/faust-enrichposts

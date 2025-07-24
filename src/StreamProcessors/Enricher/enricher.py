@@ -1,7 +1,5 @@
 import faust
 from pymongo import MongoClient
-from common.Utils.MongoUtils import MongoInterface
-import json
 
 app = faust.App(
     "enrichposts",
@@ -9,8 +7,10 @@ app = faust.App(
     value_serializer="raw",
 )
 
+mongo_client = MongoClient("mongodb://mongo:27017/")
+db = mongo_client["your_db"]
+collection = db["subscriptions"]
 
-mongo_interface = MongoInterface()
 vk_posts_topic = app.topic("vk-posts")
 enriched_topic = app.topic("enriched-vk-posts")
 
@@ -18,9 +18,12 @@ enriched_topic = app.topic("enriched-vk-posts")
 @app.agent(vk_posts_topic)
 async def process(posts):
     async for post_bytes in posts:
-        post = json.loads(post_bytes.decode("utf-8"))
+        import json
+
+        post = json.loads(post_bytes)
         group_id = post.get("group_id")
-        user_ids = mongo_interface.get_group_users(group_id)
+        users = list(collection.find({"group_id": group_id}))
+        user_ids = [u["user_id"] for u in users]
         enriched = {"post": post, "users": user_ids}
         await enriched_topic.send(value=json.dumps(enriched).encode())
 
