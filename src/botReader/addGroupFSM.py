@@ -1,3 +1,4 @@
+import logging
 from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.client.default import DefaultBotProperties
@@ -21,6 +22,8 @@ add_group_router = Router()
 from common.Utils.KafkaUtils import KafkaRouter
 
 kafka_router = KafkaRouter()
+
+log = logging.getLogger(__name__)
 
 
 @add_group_router.message(AddGroupStates.accept, F.text.casefold() == "нет")
@@ -109,6 +112,7 @@ async def add_group_link_link(message: Message, state: FSMContext) -> None:
         "Проверяем группу, пожалуйста подождите",
         reply_markup=ReplyKeyboardRemove(),
     )
+    log.info(f"Sending group for validation: {group_link}")
     data = GroupValidationRequest(
         social_media_type=SocialMediaType.VK,
         group_id=group_link,

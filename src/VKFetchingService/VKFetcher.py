@@ -1,12 +1,15 @@
 import os
+from common.logging_config import setup_logging
 import logging
 from xml import dom
 from vkbottle import VKAPIError
 from vkbottle.api import API
+from vkbottle_types.responses.wall import WallWallpostFull, WallGetResponseModel
 from dataclasses import dataclass
 from common.Utils.KafkaUtils import KafkaRouter
 import asyncio
 
+setup_logging()
 log = logging.getLogger(__name__)
 
 VK_PULLED_POSTS_TOPIC_NAME = os.getenv("VK_PULLED_POSTS_TOPIC_NAME", "vk_posts")
@@ -66,7 +69,9 @@ class VKFetcher:
                 )
         return posts
 
-    async def _update_on_group_and_send(self, task: PullingTask):
+    async def _update_on_group_and_send(
+        self, task: PullingTask
+    ) -> list[WallWallpostFull]:
         posts = await self.update_on_group_posts(task)
         if posts is not None:
             for post in posts:
@@ -78,7 +83,7 @@ class VKFetcher:
     def get_sending_topic(self, task: PullingTask) -> str:
         return self._default_sending_topic
 
-    async def update_on_group_posts(self, task: PullingTask):
+    async def update_on_group_posts(self, task: PullingTask) -> list[WallWallpostFull]:
         log.debug(f"Updating on {task.group_id} posts")
         posts = []
         for i in range(self.ITERATION_LIMIT):
@@ -98,31 +103,33 @@ class VKFetcher:
                 break
         return posts
 
-    async def pull_group_posts(self, task: PullingTask) -> list:
+    async def pull_group_posts(self, task: PullingTask) -> list[WallWallpostFull]:
         log.debug(f"Pulling for the first time from {task.group_id}")
         return await self._try_pull_posts(
             domain=task.group_id, count=self.POSTS_PACK_SIZE, offset=0
         )
 
-    def _get_last_post_id(self, group_id) -> int:
+    def _get_last_post_id(self, group_id: str) -> int:
         return self._last_post_ids.get(group_id, 0)
 
-    def _find_posts_newer_than_last(self, group_id, posts_pack):
+    def _find_posts_newer_than_last(
+        self, group_id: str, posts_pack: list[WallWallpostFull]
+    ) -> list[WallWallpostFull]:
         last_post_id = self._get_last_post_id(group_id)
         return [
             post
             for post in posts_pack
-            if post.get("id") is not None and post["id"] > last_post_id
+            if post.id is not None and post.id > last_post_id
         ]
 
-    def _update_last_post_id(self, group_id, posts):
+    def _update_last_post_id(self, group_id: str, posts: list[WallWallpostFull]):
         if not posts:
             return
         for post in posts:
-            if self._get_last_post_id(group_id) < post["id"]:
-                self._last_post_ids[group_id] = post["id"]
+            if self._get_last_post_id(group_id) < post.id:
+                self._last_post_ids[group_id] = post.id
 
-    async def _try_pull_posts(self, domain, count, offset) -> list:
+    async def _try_pull_posts(self, domain, count, offset) -> list[WallWallpostFull]:
         try:
             posts = await self._pull_posts(domain, count, offset)
             self._update_last_post_id(domain, posts)
@@ -131,11 +138,9 @@ class VKFetcher:
             log.debug(f"Couldn't get new posts for {domain}. Error: {error}")
             return []
 
-    async def _pull_posts(self, domain, count, offset) -> list:
-        posts = await self._api.request(
-            "wall.get", {"domain": domain, "count": count, "offset": offset}
-        )
-        return posts["response"]["items"]
+    async def _pull_posts(self, domain, count, offset) -> list[WallWallpostFull]:
+        response = await self._api.wall.get(domain=domain, count=count, offset=offset)
+        return response.items
 
-    def has_been_pulled(self, group_id) -> bool:
+    def has_been_pulled(self, group_id: str) -> bool:
         return self._last_post_ids.get(group_id) is not None

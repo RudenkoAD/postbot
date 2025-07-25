@@ -1,10 +1,11 @@
 from dataclasses import asdict
+import os
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
 from common.API.mongoApi import Group, User
 
-MONGO_DB_URI = "mongodb://localhost:27017/"
+MONGO_DB_URI = os.getenv("MONGO_DB_URI", "mongodb://mongodb:27017/")
 MONGO_DB_NAME = "postbot_db"
 
 
@@ -29,9 +30,9 @@ class MongoInterface:
             Adds a link between a group and a user by updating both collections.
         remove_group_user_link(group_id: str, user_id: int):
             Removes a link between a group and a user by updating both collections.
-        get_user_groups(user_id: int) -> set[str]:
+        get_user_groups(user_id: int) -> list[str]:
             Retrieves a list of group IDs associated with a user.
-        get_group_users(group_id: str) -> set[int]:
+        get_group_users(group_id: str) -> list[int]:
             Retrieves a list of user IDs associated with a group.
     """
 
@@ -94,7 +95,7 @@ class MongoInterface:
             {"user_id": user_id}, {"$pull": {"groups": group_id}}
         )
 
-    def get_user_groups(self, user_id: int) -> set[str]:
+    def get_user_groups(self, user_id: int) -> list[str]:
         """
         Get a list of groups for a user.
         :param user_id: User ID
@@ -103,9 +104,9 @@ class MongoInterface:
         user_collection_name = "users"
         collection = self.get_collection(user_collection_name)
         user = collection.find_one({"user_id": user_id})
-        return set(user.get("groups", [])) if user else set()
+        return user.get("groups", []) if user else []
 
-    def get_group_users(self, group_id: str) -> set[int]:
+    def get_group_users(self, group_id: str) -> list[int]:
         """
         Get a list of users for a group.
         :param group_id: Group ID
@@ -114,4 +115,4 @@ class MongoInterface:
         group_collection_name = "groups"
         collection = self.get_collection(group_collection_name)
         group = collection.find_one({"group_id": group_id})
-        return set(group.get("users", [])) if group else set()
+        return group.get("users", []) if group else []

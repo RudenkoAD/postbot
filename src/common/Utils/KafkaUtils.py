@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from enum import Enum
 import json
+from common.logging_config import setup_logging
 import logging
 import os
 from kafka.producer import KafkaProducer
@@ -18,6 +19,7 @@ from common.Commands.FetcherAdminCommand import (
     CommandType,
 )
 
+setup_logging()
 log = logging.getLogger(__name__)
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
@@ -52,30 +54,43 @@ class KafkaRouter:
             ),
         )
         if self.__kafka_producer.bootstrap_connected():
-            log.debug(f"Kafka producer bootstrap connection succeed")
+            log.info(
+                f"Kafka producer bootstrap connection succeed on {KAFKA_BOOTSTRAP_SERVERS}"
+            )
         else:
-            log.error(f"Kafka producer bootstrap connection failed")
+            log.error(
+                f"Kafka producer bootstrap connection failed on {KAFKA_BOOTSTRAP_SERVERS}"
+            )
 
     def send_to_validator(self, data: GroupValidationRequest):
-        self.__kafka_producer.send(
-            topic=Topic.VALIDATOR, value=json.dumps(asdict(data))
-        )
+        log.debug(f"Sending data to validator: {data}")
+        self.__kafka_producer.send(topic=Topic.VALIDATOR.value, value=asdict(data))
 
     def send_to_writer(self, data: MessageWriteRequest):
-        self.__kafka_producer.send(topic=Topic.WRITER, value=asdict(data))
+        log.debug(f"Sending data to writer: {data}")
+        self.__kafka_producer.send(topic=Topic.WRITER.value, value=asdict(data))
 
-    def send_command_to_topic(self, topic: str, command: Command):
-        self.__kafka_producer.send(topic=topic, value=asdict(command))
+    def send_command_to_fetcher_admin(self, command: FetcherAdminCommand):
+        log.debug(f"Sending command to fetcher admin: {command}")
+        self.__kafka_producer.send(
+            topic=Topic.FETCHER_ADMIN_COMMANDS.value, value=asdict(command)
+        )
+
+    def send_command_to_topic(self, topic: Topic, command: Command):
+        log.debug(f"Sending command to topic {topic}: {command}")
+        self.__kafka_producer.send(topic=topic.value, value=asdict(command))
 
     def send_dict_to_topic(self, topic: str, data: dict):
+        log.debug(f"Sending dict to topic {topic}: {data}")
         self.__kafka_producer.send(topic=topic, value=data)
 
     @staticmethod
     def get_consumer(topic: Topic, consumer_group: ConsumerGroup) -> KafkaConsumer:
         return KafkaConsumer(
-            topic,
+            topic.value,
             bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-            group_id=consumer_group,
+            group_id=consumer_group.value,
+            client_id=consumer_group.value,
             value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
 

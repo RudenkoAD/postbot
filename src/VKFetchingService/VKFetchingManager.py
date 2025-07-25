@@ -1,4 +1,5 @@
 import asyncio
+from common.logging_config import setup_logging
 import logging
 import os
 import re
@@ -22,6 +23,7 @@ from common.Commands.FetcherAdminCommand import (
 )
 from VKFetcher import VKFetcher
 
+setup_logging()
 log = logging.getLogger(__name__)
 
 

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from vkbottle_types.responses.wall import WallWallpostFull, WallGetResponseModel
 
 
 @dataclass(eq=True, frozen=True)
@@ -11,10 +12,28 @@ class Post:
         text (str): The content of the post.
     """
 
-    group_id: str
-    post_id: int
-    text: str
+    group_link: str | None = None
+    group_name: str | None = None
+    group_id: int | None = None
+    post_id: int | None = None
+    text: str | None = None
     attachments: list[str] | None = None
+
+    @staticmethod
+    def from_wall_post(wall_post: WallWallpostFull):
+        post = Post(
+            group_link=wall_post.owner_id,
+            group_name=wall_post.owner_id,
+            group_id=wall_post.owner_id,
+            post_id=wall_post.id,
+            text=wall_post.text,
+            attachments=(
+                [attachment.type for attachment in wall_post.attachments]
+                if wall_post.attachments
+                else None
+            ),
+        )
+        return post
 
 
 class EnrichedPost(Post):

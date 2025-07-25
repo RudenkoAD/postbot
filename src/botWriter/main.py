@@ -2,6 +2,11 @@ import os
 from aiogram import Bot
 from common.Utils.KafkaUtils import ConsumerGroup, KafkaRouter, Topic
 import asyncio
+from common.logging_config import setup_logging
+import logging
+
+setup_logging()
+log = logging.getLogger(__name__)
 
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "your-telegram-bot-token")
@@ -23,4 +28,5 @@ async def consume():
 
 
 if __name__ == "__main__":
+    log.info("Starting botWriter main")
     asyncio.run(consume())

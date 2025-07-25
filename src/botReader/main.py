@@ -8,6 +8,11 @@ from mainFSM import main_menu_router
 from states import ScreenStates
 from text_storage import texts
 from keyboards import keyboards
+from common.logging_config import setup_logging
+import logging
+
+setup_logging()
+log = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
@@ -26,5 +31,6 @@ async def handle_message(message: Message, state: FSMContext):
 
 
 if __name__ == "__main__":
+    log.info("Starting botReader main")
     dp.include_routers(add_group_router, main_menu_router)
     dp.run_polling(bot)

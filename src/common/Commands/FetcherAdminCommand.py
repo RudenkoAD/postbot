@@ -33,10 +33,10 @@ class FetcherAdminCommand(Command):
 class AddGroupsCommand(FetcherAdminCommand):
     """Command to add groups to the Fetcher Admin Service.
     Attributes:
-        groups (set[str]): Set of group IDs to add.
+        groups (list[str]): List of group IDs to add.
     """
 
-    groups: set[str]
+    groups: list[str]
     command_type: ClassVar[CommandType] = CommandType.ADD_GROUPS
 
 
@@ -44,16 +44,15 @@ class AddGroupsCommand(FetcherAdminCommand):
 class RemoveGroupsCommand(FetcherAdminCommand):
     """Command to remove groups from the Fetcher Admin Service.
     Attributes:
-        groups (set[str]): Set of group IDs to remove.
+        groups (list[str]): List of group IDs to remove.
     """
 
-    groups: set[str]
+    groups: list[str]
     command_type: ClassVar[CommandType] = CommandType.REMOVE_GROUPS
 
 
 @dataclass
 class ClearGroupsCommand(FetcherAdminCommand):
-    groups: set[str]
     command_type: ClassVar[CommandType] = CommandType.CLEAR_GROUPS
 
 

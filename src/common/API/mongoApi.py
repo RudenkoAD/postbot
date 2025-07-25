@@ -12,7 +12,7 @@ class User:
     """
 
     user_id: int
-    groups: set[str]  # Set of group IDs the user subscribed to
+    groups: list[str]
 
 
 @dataclass(eq=True, frozen=True)
@@ -22,9 +22,9 @@ class Group:
     Attributes:
         group_id (str): Unique identifier for the group.
         name (str): Name of the group.
-        users (set[int]): Set of user IDs that are members of the group.
+        users (list[int]): List of user IDs that are members of the group.
     """
 
     group_id: str
     name: str
-    users: set[int]  # Set of user IDs that are members of the group
+    users: list[int]  # List of user IDs that are members of the group

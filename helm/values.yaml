@@ -12,6 +12,7 @@ mongodb:
     enabled: true
     size: 8Gi
   service:
+    name: mongodb
     type: ClusterIP
     port: 27017
 
@@ -38,7 +39,35 @@ kafka:
   persistence:
     enabled: true
     size: 8Gi
-  autoCreateTopicsEnable: false
+  autoCreateTopicsEnable: true
+  autoCreateTopics:
+    - name: fetcher_admin_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: kafka_admin_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: vk_fetcher_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: validator_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: writer_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: vk_posts
+      partitions: 1
+      replicationFactor: 1
+    - name: enriched_vk_posts
+      partitions: 1
+      replicationFactor: 1
+    - name: bot_reader_commands
+      partitions: 1
+      replicationFactor: 1
+    - name: bot_writer_commands
+      partitions: 1
+      replicationFactor: 1
   logDirs:
     - /bitnami/kafka/data
   extraEnvVars:
